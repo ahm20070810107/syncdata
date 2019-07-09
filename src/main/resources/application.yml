@@ -1,0 +1,26 @@
+
+hitales:
+  national:
+    ganzhou:
+      mysql:
+#        jdbc-url: jdbc:mysql://rm-bp10njuk48vd2n4bzpo.mysql.rds.aliyuncs.com:3306/national_service?&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull
+        jdbc-url: jdbc:mysql://localhost:3306/national_service?&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull
+        username: root
+#        password: Hitales20128
+        password: root
+        driverClassName: com.mysql.cj.jdbc.Driver
+        maximumPoolSize: 5
+        minimumIdle: 2
+        maxLifetime: 50000
+        idleTimeout: 30000
+        # 是否在控制台打印SQL
+        show-sql: false
+        # 是否自动创建表
+        ddl-auto: none  #update none create-only
+
+  third:
+    cookie: login=egcheckcode=845DLQaFet4=&user_name=wIlsN9Muzco=; ASP.NET_SessionId=yus3rwy5otpep5adjiaqp4ax
+    ipAddress: 192.168.1.5
+#    ipAddress: 172.16.1.12
+server:
+  port: 8086
