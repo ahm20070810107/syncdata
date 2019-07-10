@@ -26,7 +26,7 @@ public enum BloodTypeRH implements IntEnum, Describable {
 	private Integer key;
 	private String desc;
 
-	private BloodTypeRH(Integer key, String desc) {
+	 BloodTypeRH(Integer key, String desc) {
 		this.key = key;
 		this.desc = desc;
 	}
