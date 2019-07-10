@@ -16,6 +16,9 @@ configurations {
 }
 
 repositories {
+    maven { url 'http://114.55.40.105:8081/repository/hitales-maven/' }
+    maven { url 'http://114.55.40.105:8081/repository/aliyun-jcenter/' }
+    maven { url 'https://maven.aliyun.com/repository/public' }
     mavenCentral()
 }
 
@@ -25,8 +28,11 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'mysql:mysql-connector-java'
     annotationProcessor 'org.projectlombok:lombok'
-//    compile 'com.hitales:hitales-commons-core:0.2.0-SNAPSHOT'
+    compile 'com.hitales:hitales-commons-jpa:0.2.0-SNAPSHOT'
+    compile 'com.hitales:hitales-commons-core:0.2.0-SNAPSHOT'
     compile 'com.alibaba:fastjson:1.2.41'
+    compile 'org.apache.poi:poi:3.17'
+    compile 'org.apache.poi:poi-ooxml:3.17'
 //    compile 'org.modelmapper:modelmapper:2.3.2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation 'org.springframework.boot:spring-boot-starter-web'
