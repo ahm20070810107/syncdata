@@ -1,5 +1,7 @@
 package com.hitales.national.ganzhou.syncdata.service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Strings;
 import com.hitales.national.ganzhou.syncdata.enums.Nation;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +11,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.NumberToTextConverter;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,24 +36,31 @@ import java.util.Objects;
 @Component
 @Slf4j
 public class CommonToolsService {
-    @Value("${middleExcel.sourceFile}")
-    private String sourceFile;
 
-    @Value("${middleExcel.verifyResultFile}")
+    @Value("${verify.output.path}")
     private String verifyResultFile;
 
     private Map<String, Nation> mapNation = new HashMap<>();
-
+    private Map<String,String> mapGanzhou = new HashMap<>();
     public static final Integer MAX_READ_SIZE = 1000;
 
     @PostConstruct
     private void init(){
-        if(Strings.isNullOrEmpty(sourceFile)){
-            throw new RuntimeException("excel路径为空！");
+        String ganzhouNation = "{'01':'汉族','1':'汉族','02':'蒙古族','03':'回族','04':'藏族','05':'维吾尔族','06':'苗族','07':'彝族','08':'壮族','09':'朝鲜族','10':'布依族','11':'满族','12':'侗族','13':'瑶族','14':'白族','15':'土家族','16':'哈尼族','17':'哈萨克族','18':'傣族','19':'黎族','20':'傈僳族','21':'佤族','22':'畲族','23':'高山族','24':'拉枯族','25':'水族','26':'东乡族','27':'纳西族','28':'景颇族','29':'柯尔克孜族','30':'土族','31':'达翰尔族','32':'仫佬族','33':'羌族','34':'布朗族','35':'撒拉族','36':'毛南族','37':'仡佬族','38':'锡伯族','39':'阿昌族','40':'普米族','41':'塔吉克族','42':'怒族','43':'乌孜别克族','44':'俄罗斯族','45':'鄂温克族','46':'德昂族','47':'保安族','48':'裕固族','49':'京族','50':'塔塔尔族','51':'独龙族','52':'鄂伦春族','53':'赫哲族','54':'门巴族','55':'珞巴族','56':'基诺族','57':'其他','58':'外国血统'}";
+        JSONObject jsonObject = JSON.parseObject(ganzhouNation);
+        for(Map.Entry<String,Object> nation : jsonObject.entrySet()){
+             mapGanzhou.put(nation.getKey(),nation.getValue().toString());
         }
         for(Nation nation : Nation.values()){
             mapNation.put(nation.getDesc(),nation);
         }
+    }
+
+    public String getGanzhouNation(String key){
+        if(mapGanzhou.containsKey(key)){
+            return mapGanzhou.get(key);
+        }
+        return "";
     }
 
     public Nation getNation(String nation){
@@ -61,23 +69,6 @@ public class CommonToolsService {
         return mapNation.get(nation);
     }
 
-    public XSSFSheet getSourceSheetByName(String sheetName){
-        if(Strings.isNullOrEmpty(sheetName)){
-            throw new RuntimeException("sheetName不能为空！");
-        }
-        XSSFWorkbook xssfSourceWorkbook;
-        try {
-            xssfSourceWorkbook = new XSSFWorkbook(sourceFile);
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-        XSSFSheet xssfSheet = xssfSourceWorkbook.getSheet(sheetName);
-        if(Objects.isNull(xssfSheet)){
-            throw new RuntimeException(String.format("【%s】sheet在excel中不存在！", sheetName));
-        }
-
-        return xssfSheet;
-    }
 
     public static String getCellValue(Cell cell) {
         if (cell == null) {
@@ -177,15 +168,6 @@ public class CommonToolsService {
         for(String param : params){
             row.createCell(cellIndex++).setCellValue(param);
         }
-    }
-
-    public String getCountyPrefix(String countySheet, boolean prefix){
-        Sheet sheet = getSourceSheetByName(countySheet);
-        String code = sheet.getRow(1).getCell(2).getStringCellValue();
-        if(prefix && !Objects.isNull(code) && code.length() > 6){
-            return code.substring(0,6);
-        }
-        return Objects.isNull(code)?"": code;
     }
 
 

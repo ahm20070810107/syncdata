@@ -5,7 +5,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
 import com.hitales.commons.enums.EnumCollector;
-import com.hitales.national.migrate.enums.DisabilityState;
+import com.hitales.national.ganzhou.syncdata.enums.DisabilityState;
 
 import javax.persistence.AttributeConverter;
 import java.util.List;

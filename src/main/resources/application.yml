@@ -1,4 +1,6 @@
-
+verify:
+  output:
+    path: /data/hitales/midData/
 hitales:
   national:
     ganzhou:

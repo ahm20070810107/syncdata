@@ -1,19 +1,21 @@
 package com.hitales.national.ganzhou.syncdata.service;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.hitales.national.ganzhou.syncdata.common.IdCard;
 import com.hitales.national.ganzhou.syncdata.common.Phone;
 import com.hitales.national.ganzhou.syncdata.dao.CitizenDao;
 import com.hitales.national.ganzhou.syncdata.dao.GB2260Dao;
+import com.hitales.national.ganzhou.syncdata.dao.PersonRepository;
 import com.hitales.national.ganzhou.syncdata.entity.Citizen;
 import com.hitales.national.ganzhou.syncdata.entity.GB2260;
+import com.hitales.national.ganzhou.syncdata.entity.Person;
 import com.hitales.national.ganzhou.syncdata.enums.CitizenGender;
 import com.hitales.national.ganzhou.syncdata.enums.IdType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,78 +43,73 @@ public class CitizenService {
     @Autowired
     private GB2260Dao gb2260Dao;
 
-    private Map<String,Long> villageMap;
+    @Autowired
+    private PersonRepository personRepository;
 
-    public boolean verify(String citizenSheet,String countySheet){
-         SXSSFWorkbook verifyWorkbook = new SXSSFWorkbook(CommonToolsService.MAX_READ_SIZE);
-         boolean verifyResult = verifyCitizen(citizenSheet,countySheet,verifyWorkbook);
+    private final String CARD_TYPE = "身份证";
+    private Person transPerson(Person person){
 
-         commonToolsService.saveExcelFile(verifyWorkbook, citizenSheet);
-         return verifyResult;
+        person.setDistrictCode(person.getDistrictCode() +"001");
+        person.setSNation(commonToolsService.getGanzhouNation(person.getSNation()));
+        return person;
     }
 
     @Transactional
-    public boolean importToDb(String citizenSheet,String countySheet){
-        if(!verify(citizenSheet,countySheet)){
-            return false;
-        }
-//        String countyPrefix = commonToolsService.getCountyPrefix(countySheet, true);
-        villageMap = new HashMap<>();
-        List<Citizen> citizens = new ArrayList<>();
-        XSSFSheet sourceDataSheet = commonToolsService.getSourceSheetByName(citizenSheet);
-        // 将excel中数据全部取出转换为citizen再统一存储
-        for (int i = 1; i <= sourceDataSheet.getLastRowNum(); i++) {
-            Row row = sourceDataSheet.getRow(i);
-            citizens.add(sheetRowToCitizen(row));
-        }
+    public boolean importToDb(Boolean toDbFlag){
 
+        SXSSFWorkbook verifyWorkbook = new SXSSFWorkbook(CommonToolsService.MAX_READ_SIZE);
+
+        Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, "居民错误信息", "原始行号,证件类型,证件号码,证件姓名,民族,家庭住址,本人电话,所属自然村,备注", ",");
+
+        List<Person> personList = personRepository.findByDistrictCodeIn(Lists.newArrayList("360722106204","360722106216"));
+
+        int verifyRowCount = 1;
+        Map<String, String> villageMap = new HashMap<>();
+        Set<String> idCardSet = new HashSet<>();
+        List<Citizen> citizens = new ArrayList<>();
         // 存储入数据库
         int SAVE_COUNT = 500;
-        int i = 0;
-        for(; (i+1)*SAVE_COUNT <= citizens.size(); i ++){
-            citizenDao.saveAll(citizens.subList(i*SAVE_COUNT, (i+1)*SAVE_COUNT));
+        for(Person person : personList){
+            Person sPerson = transPerson(person);
+
+            String errorInfo = getCitizenErrorInfo(CARD_TYPE, sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getDistrictCode(), idCardSet, villageMap);
+
+            if(!Strings.isNullOrEmpty(errorInfo)){
+                Row verifyRow = verifySheet.createRow(verifyRowCount);
+                commonToolsService.fillSheetRow(verifyRowCount ++ ,verifyRow,CARD_TYPE, sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getSPhone(), sPerson.getDistrictCode(),errorInfo);
+                 // 若有错则不做保存
+                continue;
+            }
+            citizens.add(personToCitizen(sPerson));
+            if(citizens.size() == SAVE_COUNT){
+                citizenDao.saveAll(citizens);
+                citizens = new ArrayList<>();
+            }
         }
-        if(i*SAVE_COUNT != citizens.size()) {
-            citizenDao.saveAll(citizens.subList(i * SAVE_COUNT, citizens.size()));
-        }
+        citizenDao.saveAll(citizens);
+
+        commonToolsService.saveExcelFile(verifyWorkbook, "居民错误信息列表");
         return true;
     }
 
+  private Citizen personToCitizen(Person person){
+      Citizen citizen = new Citizen();
+      IdCard cardInfo = IdCard.tryParse(person.getIdno());
+      citizen.setGender(getGender(cardInfo.getGender()));
+      citizen.setBirthday(cardInfo.getBirthday().toDate());
+      citizen.setIdType(IdType.ID);
+      citizen.setIdNo(person.getIdno());
+      citizen.setAddress(person.getNowAddress());
+      citizen.setNation(commonToolsService.getNation(person.getSNation()));
+      if(Phone.match(person.getSPhone())) {
+          citizen.setPhone(person.getSPhone());
+      }
+      citizen.setIdName(person.getName());
+      citizen.setLocation(Long.parseLong(person.getDistrictCode()));
+      return citizen;
+  }
 
-
-    private Citizen sheetRowToCitizen(Row citizenRow){
-        Citizen citizen = new Citizen();
-
-        String cardType = CommonToolsService.getCellValue(citizenRow.getCell(0));
-        String idCard = CommonToolsService.getCellValue(citizenRow.getCell(1));
-        String idName = CommonToolsService.getCellValue(citizenRow.getCell(2));
-        String nation = CommonToolsService.getCellValue(citizenRow.getCell(3));
-        String address = CommonToolsService.getCellValue(citizenRow.getCell(4)).trim();
-        String phone = CommonToolsService.getCellValue(citizenRow.getCell(5));
-        String village = CommonToolsService.getCellValue(citizenRow.getCell(6));
-
-        if(cardType.equals(IdType.ID.getDesc())) {
-            IdCard cardInfo = IdCard.tryParse(idCard);
-            if (Objects.isNull(cardInfo)) {
-                throw new RuntimeException(String.format("身份证号码【%s】格式错误！", idCard));
-            }
-            citizen.setGender(getGender(cardInfo.getGender()));
-            citizen.setBirthday(cardInfo.getBirthday().toDate());
-        }
-
-        citizen.setIdType( cardType.equals(IdType.BIRTH.getDesc())? IdType.BIRTH : IdType.ID);
-        citizen.setIdNo(idCard);
-        citizen.setNation(commonToolsService.getNation(nation));
-        citizen.setAddress(address);
-        if(Phone.match(phone)) {
-            citizen.setPhone(phone);
-        }
-        citizen.setIdName(idName);
-        citizen.setLocation(Long.parseLong(village));
-        return citizen;
-    }
-
-    public CitizenGender getGender(Integer gender){
+    private CitizenGender getGender(Integer gender){
         if(gender.equals(1)){
             return CitizenGender.MALE;
         }
@@ -123,36 +120,7 @@ public class CitizenService {
     }
 
 
-    private boolean verifyCitizen(String citizenSheet, String countySheet, SXSSFWorkbook verifyWorkbook) {
-        int verifyRowCount = 1;
-        Set<String> idCardSet = new HashSet<>();
-        Map<String, String> villageMap = new HashMap<>();
-        boolean result = true;
-        XSSFSheet sourceDataSheet = commonToolsService.getSourceSheetByName(citizenSheet);
-
-        Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, citizenSheet, "原始行号,证件类型,证件号码,证件姓名,民族,家庭住址,本人电话,所属自然村,备注", ",");
-
-        for (int i = 1; i <= sourceDataSheet.getLastRowNum(); i++) {
-            Row row = sourceDataSheet.getRow(i);
-            String cardType = CommonToolsService.getCellValue(row.getCell(0));
-            String idCard = CommonToolsService.getCellValue(row.getCell(1));
-            String idName = CommonToolsService.getCellValue(row.getCell(2));
-            String nation = CommonToolsService.getCellValue(row.getCell(3));
-            String address = CommonToolsService.getCellValue(row.getCell(4)).trim();
-            String phone = CommonToolsService.getCellValue(row.getCell(5));
-            String village = CommonToolsService.getCellValue(row.getCell(6));
-            String errorInfo = getCitizenErrorInfo(cardType, idCard, idName, address, phone, village, idCardSet, villageMap);
-
-            if(!Strings.isNullOrEmpty(errorInfo)){
-                Row verifyRow = verifySheet.createRow(verifyRowCount++);
-                result = false;
-                commonToolsService.fillSheetRow(i+1,verifyRow,cardType,idCard,idName,nation,address,phone,village,errorInfo);
-            }
-        }
-        return result;
-    }
-
-    public String getCitizenErrorInfo(String cardType, String idCard, String idName, String address, String phone, String village, Set<String> idCardSet, Map<String, String> villageMap){
+    private String getCitizenErrorInfo(String cardType, String idCard, String idName, String address, String village, Set<String> idCardSet, Map<String, String> villageMap){
         Integer count = 1;
         StringBuilder sb = new StringBuilder();
         if(!"身份证".equals(cardType) && !"出生证明".equals(cardType)){
@@ -176,9 +144,6 @@ public class CitizenService {
         if(!Strings.isNullOrEmpty(idCard)) {
             idCardSet.add(idCard);
         }
-//        if(Strings.isNullOrEmpty(phone) || !Phone.match(phone)){
-//            sb.append(count++).append("、电话号码为空或格式不正确\r\n");
-//        }
         if( address.length() > 200){
             sb.append(count++).append("、家庭住址长度大于200\r\n");
         }
