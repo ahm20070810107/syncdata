@@ -81,7 +81,7 @@ public class CitizenService {
                 continue;
             }
             citizens.add(personToCitizen(sPerson));
-            if(citizens.size() == SAVE_COUNT){
+            if(citizens.size() >= SAVE_COUNT){
                 citizenDao.saveAll(citizens);
                 citizens = new ArrayList<>();
             }
