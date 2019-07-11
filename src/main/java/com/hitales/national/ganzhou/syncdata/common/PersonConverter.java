@@ -75,6 +75,7 @@ public class PersonConverter {
 
     private Citizen convertCitizen(Person person,PersonTag personTag){
         Citizen citizen=new Citizen();
+        citizen.setCrowds(Lists.newArrayList());
         citizen.setBirthday(null);person.getBirthday();
         citizen.setBloodTypeAbo(BloodTypeABO.TYPE_O);person.getBloodType();
         citizen.setDisabilityState(null);person.getCj1();//cj_1到cj_5
@@ -95,8 +96,12 @@ public class PersonConverter {
             citizen.setCrowdDisabled(YesNo.YES);
         }
         // 孕产妇
-        if(Strings.isNotBlank(person.getYcfFlag()) && "1".equals(person.getYcfFlag())){
+        if( "1".equals(person.getYcfFlag())){
             citizen.setCrowdMaternal(YesNo.YES);
+        }
+        // 是否贫困
+        if("2".equals(person.getRqClass()) || "3".equals(person.getRqClass())){
+            citizen.setCrowdPoor(YesNo.YES);
         }
 
         return citizenServiceTag(citizen,personTag);
