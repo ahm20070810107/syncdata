@@ -68,8 +68,26 @@ public class PersonConverter {
     }
 
     private Citizen citizenServiceTag(Citizen citizen, PersonTag personTag){
-
-
+        if("1".equals(personTag.getMxb1())){
+            return citizen;
+        }
+        if("1".equals(personTag.getMxb2())){
+            citizen.setCrowdHypertension(YesNo.YES);
+        }
+        if("1".equals(personTag.getMxb3())){
+            citizen.setCrowdDiabetes2(YesNo.YES);
+        }
+        if("1".equals(personTag.getMxb8())){
+            citizen.setCrowdMentalDisorder(YesNo.YES);
+        }
+        // 肺结核
+        if("1".equals(personTag.getMxb9())){
+            citizen.setCrowdPulmonaryTuberculosis(YesNo.YES);
+        }
+        // 是否其他传染病
+        if("1".equals(personTag.getMxb11())){
+            citizen.setCrowdInfection(YesNo.YES);
+        }
         return citizen;
     }
 
