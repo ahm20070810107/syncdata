@@ -9,8 +9,10 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @Author: jingang
@@ -28,7 +30,7 @@ public class PersonConverter {
 
     private CitizenEhr citizenEhr;
 
-    private CitizenServeTagMapping citizenServeTagMapping;
+    private List<CitizenServeTagMapping> citizenServeTagMappings;
 
     private List<CitizenEhrFamilyHistory> familyHistories;
 
@@ -41,7 +43,7 @@ public class PersonConverter {
         PersonConverter converter=new PersonConverter();
         converter.citizen=converter.convertCitizen(person,personTag);
         converter.citizenEhr=converter.convertEhr(person,personTag);
-        converter.citizenServeTagMapping = converter.convertCitizenTag(personTag,citizenServeTagDao,countyId);
+        converter.citizenServeTagMappings = converter.convertCitizenTag(personTag,citizenServeTagDao,countyId);
         converter.familyHistories=converter.convertFamilyHistories(person,personTag);
         converter.geneticHistories=converter.convertGeneticHistories(person,personTag);
         converter.medicalHistories=converter.convertMedicalHistories(person,personTag);
@@ -51,17 +53,52 @@ public class PersonConverter {
         return converter;
     }
 
-    private CitizenServeTagMapping convertCitizenTag(PersonTag personTag, CitizenServeTagDao citizenServeTagDao, Long countyId){
-        CitizenServeTagMapping citizenServeTagMapping = new CitizenServeTagMapping();
-
-        return citizenServeTagMapping;
-
+    private List<CitizenServeTagMapping> convertCitizenTag(PersonTag personTag, CitizenServeTagDao citizenServeTagDao, Long countyId){
+        List<CitizenServeTagMapping> citizenServeTagMappings =  new ArrayList<>();
+        List<String> tagList = Lists.newArrayList();
+        if("1".equals(personTag.getMxb4())){
+            tagList.add("冠心病");
+        }
+        if("1".equals(personTag.getMxb5())){
+            tagList.add("慢性阻塞性肺疾病");
+        }
+        if("1".equals(personTag.getMxb6())){
+            tagList.add("恶性肿瘤");
+        }
+        if("1".equals(personTag.getMxb7())){
+            tagList.add("脑卒中");
+        }
+        if("1".equals(personTag.getMxb10())){
+            tagList.add("肝炎");
+        }
+        if("1".equals(personTag.getMxb12())){
+            tagList.add("职业病");
+        }
+        if("1".equals(personTag.getMxb13())){
+            tagList.add(personTag.getMxbQtvalue());
+        }
+        if("1".equals(personTag.getMxb14())){
+            tagList.add("哮喘");
+        }
+        for(String tag : tagList){
+            CitizenServeTagMapping citizenServeTagMapping = new CitizenServeTagMapping();
+            citizenServeTagMapping.setPackageId(0L);
+            Optional<CitizenServeTag> citizenServeTag = citizenServeTagDao.findTopByCountyIdAndTagName(countyId,tag);
+            citizenServeTag.ifPresent(citizenTag-> citizenServeTagMapping.setTagId(citizenTag.getId()));
+            if(!citizenServeTag.isPresent()){
+               citizenServeTagMapping.setTagId(saveCitizenTag(tag,citizenServeTagDao,countyId));
+            }
+            citizenServeTagMapping.setCreateTime(new Date());
+            citizenServeTagMapping.setUpdateTime(citizenServeTagMapping.getCreateTime());
+            citizenServeTagMappings.add(citizenServeTagMapping);
+        }
+        return citizenServeTagMappings;
     }
 
-    private Long saveCitizenTag(String tageName, CitizenServeTagDao citizenServeTagDao, Long countId){
+    private Long saveCitizenTag(String tagName, CitizenServeTagDao citizenServeTagDao, Long countId){
         CitizenServeTag citizenServeTag = new CitizenServeTag();
         citizenServeTag.setCountyId(countId);
-        citizenServeTag.setTagName(tageName);
+        citizenServeTag.setTagName(tagName);
         citizenServeTag.setCreateTime(new Date());
         citizenServeTag.setUpdateTime(citizenServeTag.getCreateTime());
         return citizenServeTagDao.save(citizenServeTag).getId();
@@ -219,8 +256,8 @@ public class PersonConverter {
         return citizenEhr;
     }
 
-    public CitizenServeTagMapping getCitizenServeTag(){
-        return this.citizenServeTagMapping;
+    public List<CitizenServeTagMapping> getCitizenServeTag(){
+        return this.citizenServeTagMappings;
     }
 
     public List<CitizenEhrFamilyHistory> getFamilyHistories() {
