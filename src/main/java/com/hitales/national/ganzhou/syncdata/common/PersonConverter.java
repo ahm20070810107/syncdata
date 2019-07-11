@@ -1,6 +1,7 @@
 package com.hitales.national.ganzhou.syncdata.common;
 
 import com.google.common.collect.Lists;
+import com.hitales.national.ganzhou.syncdata.dao.CitizenServeTagDao;
 import com.hitales.national.ganzhou.syncdata.entity.*;
 import com.hitales.national.ganzhou.syncdata.enums.*;
 import org.springframework.beans.BeanWrapper;
@@ -25,6 +26,8 @@ public class PersonConverter {
 
     private CitizenEhr citizenEhr;
 
+    private CitizenServeTagMapping citizenServeTagMapping;
+
     private List<CitizenEhrFamilyHistory> familyHistories;
 
     private List<CitizenEhrGeneticHistory> geneticHistories;
@@ -32,10 +35,11 @@ public class PersonConverter {
     private List<CitizenEhrMedicalHistory> medicalHistories;
 
 
-    public static PersonConverter convert(Person person,PersonTag personTag){
+    public static PersonConverter convert(Person person, PersonTag personTag, CitizenServeTagDao citizenServeTagDao,Long countyId){
         PersonConverter converter=new PersonConverter();
         converter.citizen=converter.convertCitizen(person,personTag);
         converter.citizenEhr=converter.convertEhr(person,personTag);
+        converter.citizenServeTagMapping = converter.convertCitizenTag(personTag,citizenServeTagDao,countyId);
         converter.familyHistories=converter.convertFamilyHistories(person,personTag);
         converter.geneticHistories=converter.convertGeneticHistories(person,personTag);
         converter.medicalHistories=converter.convertMedicalHistories(person,personTag);
@@ -43,6 +47,22 @@ public class PersonConverter {
 
 
         return converter;
+    }
+
+    private CitizenServeTagMapping convertCitizenTag(PersonTag personTag, CitizenServeTagDao citizenServeTagDao, Long countyId){
+        CitizenServeTagMapping citizenServeTagMapping = new CitizenServeTagMapping();
+
+        return citizenServeTagMapping;
+
+    }
+
+    private Long saveCitizenTag(String tageName, CitizenServeTagDao citizenServeTagDao, Long countId){
+        CitizenServeTag citizenServeTag = new CitizenServeTag();
+        citizenServeTag.setCountyId(countId);
+        citizenServeTag.setTagName(tageName);
+        citizenServeTag.setCreateTime(new Date());
+        citizenServeTag.setUpdateTime(citizenServeTag.getCreateTime());
+        return citizenServeTagDao.save(citizenServeTag).getId();
     }
 
     private Citizen convertCitizen(Person person,PersonTag personTag){
@@ -156,6 +176,10 @@ public class PersonConverter {
 
     public CitizenEhr getCitizenEhr() {
         return citizenEhr;
+    }
+
+    public CitizenServeTagMapping getCitizenServeTag(){
+        return this.citizenServeTagMapping;
     }
 
     public List<CitizenEhrFamilyHistory> getFamilyHistories() {
