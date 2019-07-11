@@ -1,9 +1,11 @@
 package com.hitales.national.ganzhou.syncdata.common;
 
 import com.google.common.collect.Lists;
+import com.hitales.commons.enums.YesNo;
 import com.hitales.national.ganzhou.syncdata.dao.CitizenServeTagDao;
 import com.hitales.national.ganzhou.syncdata.entity.*;
 import com.hitales.national.ganzhou.syncdata.enums.*;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
@@ -65,6 +67,12 @@ public class PersonConverter {
         return citizenServeTagDao.save(citizenServeTag).getId();
     }
 
+    private Citizen citizenServiceTag(Citizen citizen, PersonTag personTag){
+
+
+        return citizen;
+    }
+
     private Citizen convertCitizen(Person person,PersonTag personTag){
         Citizen citizen=new Citizen();
         citizen.setBirthday(null);person.getBirthday();
@@ -81,7 +89,17 @@ public class PersonConverter {
         citizen.setWorkUnit(person.getWorkunit());
         citizen.setMedicalPayment(MedicalPayment.COMMERCIAL_MEDICAL_INSURANCE);person.getYbtype();//有两个
 
-        return citizen;
+
+        // 残疾状况
+        if(Strings.isNotBlank(person.getCj1()) && !"1".equals(person.getCj1())){
+            citizen.setCrowdDisabled(YesNo.YES);
+        }
+        // 孕产妇
+        if(Strings.isNotBlank(person.getYcfFlag()) && "1".equals(person.getYcfFlag())){
+            citizen.setCrowdMaternal(YesNo.YES);
+        }
+
+        return citizenServiceTag(citizen,personTag);
     }
 
     private CitizenEhr convertEhr(Person person,PersonTag personTag){
