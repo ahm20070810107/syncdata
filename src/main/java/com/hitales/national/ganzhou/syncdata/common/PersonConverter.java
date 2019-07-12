@@ -286,9 +286,6 @@ public class PersonConverter {
      * @return
      */
     private List<CitizenEhrMedicalHistory> convertMedicalHistories(Person person,PersonTag personTag){
-        if(!"2".equals(person.getYcbsHave())){
-            return null;
-        }
 
         List<CitizenEhrMedicalHistory> medicalHistories= Lists.newArrayList();
 
@@ -310,9 +307,9 @@ public class PersonConverter {
     private void convertMedicalDiseaseHistory(Person person, List<CitizenEhrMedicalHistory> medicalHistories){
         BeanWrapper wrapper = new BeanWrapperImpl(person);
         for (int i = 1; i <=6 ; i++) {
-            Object year=wrapper.getPropertyValue("jwsQzYy"+1);
-            Object month=wrapper.getPropertyValue("jwsQzMm"+1);
-            Object disease=wrapper.getPropertyValue("jwsSZg"+1);
+            Object year=wrapper.getPropertyValue("jwsQzYy"+i);
+            Object month=wrapper.getPropertyValue("jwsQzMm"+i);
+            Object disease=wrapper.getPropertyValue("jwsSZg"+i);
             if(year!=null&&month!=null&&disease!=null){
                 String yearStr=year.toString();
                 String monthStr=month.toString();
@@ -356,8 +353,8 @@ public class PersonConverter {
         }
 
         for (int i = 1; i <=2 ; i++) {
-            Object name=wrapper.getPropertyValue(namePropertyName+1);
-            Object date=wrapper.getPropertyValue(timePropertyName+1);
+            Object name=wrapper.getPropertyValue(namePropertyName+i);
+            Object date=wrapper.getPropertyValue(timePropertyName+i);
 
             if(name!=null&&date!=null){
                 String nameStr=name.toString();
