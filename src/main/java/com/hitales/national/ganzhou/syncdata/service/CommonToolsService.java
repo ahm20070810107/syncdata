@@ -40,8 +40,8 @@ public class CommonToolsService {
     @Value("${verify.output.path}")
     private String verifyResultFile;
 
-    private Map<String, Nation> mapNation = new HashMap<>();
-    private Map<String,String> mapGanzhou = new HashMap<>();
+    private static Map<String, Nation> mapNation = new HashMap<>();
+    private static Map<String,String> mapGanzhou = new HashMap<>();
     public static final Integer MAX_READ_SIZE = 1000;
 
     @PostConstruct
@@ -63,7 +63,7 @@ public class CommonToolsService {
         return "";
     }
 
-    public Nation getNation(String nation){
+    public static Nation getNation(String nation){
         if(Strings.isNullOrEmpty(nation))
             return null;
         return mapNation.get(nation);

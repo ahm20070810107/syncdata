@@ -11,7 +11,6 @@ import com.hitales.national.ganzhou.syncdata.dao.PersonRepository;
 import com.hitales.national.ganzhou.syncdata.entity.Citizen;
 import com.hitales.national.ganzhou.syncdata.entity.GB2260;
 import com.hitales.national.ganzhou.syncdata.entity.Person;
-import com.hitales.national.ganzhou.syncdata.enums.CitizenGender;
 import com.hitales.national.ganzhou.syncdata.enums.IdType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
@@ -81,6 +80,9 @@ public class CitizenService {
                  // 若有错则不做保存
                 continue;
             }
+            if(!toDbFlag){
+                continue;
+            }
             citizens.add(personToCitizen(sPerson));
             if(citizens.size() >= SAVE_COUNT){
                 citizenDao.saveAll(citizens);
@@ -101,7 +103,7 @@ public class CitizenService {
       citizen.setIdType(IdType.ID);
       citizen.setIdNo(person.getIdno());
       citizen.setAddress(person.getNowAddress());
-      citizen.setNation(commonToolsService.getNation(person.getSNation()));
+      citizen.setNation(CommonToolsService.getNation(person.getSNation()));
       if(Phone.match(person.getSPhone())) {
           citizen.setPhone(person.getSPhone());
       }
