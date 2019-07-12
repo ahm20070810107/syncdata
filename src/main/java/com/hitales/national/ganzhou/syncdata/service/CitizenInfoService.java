@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 /**
@@ -25,6 +26,7 @@ public class CitizenInfoService {
     @Autowired
     private CitizenServeTagDao citizenServeTagDao;
 
+    @Transactional
     public void updateCitizen(Long citizenId, Person person, PersonTag personTag){
         Long countyId = 100L;
         PersonConverter converter=PersonConverter.convert(person,personTag,citizenServeTagDao,countyId);
