@@ -2,6 +2,7 @@ package com.hitales.national.ganzhou.syncdata.service;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.hitales.national.ganzhou.syncdata.common.ConvertUtil;
 import com.hitales.national.ganzhou.syncdata.common.IdCard;
 import com.hitales.national.ganzhou.syncdata.common.Phone;
 import com.hitales.national.ganzhou.syncdata.dao.CitizenDao;
@@ -95,7 +96,7 @@ public class CitizenService {
   private Citizen personToCitizen(Person person){
       Citizen citizen = new Citizen();
       IdCard cardInfo = IdCard.tryParse(person.getIdno());
-      citizen.setGender(getGender(cardInfo.getGender()));
+      citizen.setGender(ConvertUtil.getGender(cardInfo.getGender()));
       citizen.setBirthday(cardInfo.getBirthday().toDate());
       citizen.setIdType(IdType.ID);
       citizen.setIdNo(person.getIdno());
@@ -109,15 +110,6 @@ public class CitizenService {
       return citizen;
   }
 
-    private CitizenGender getGender(Integer gender){
-        if(gender.equals(1)){
-            return CitizenGender.MALE;
-        }
-        if(gender.equals(2)){
-            return CitizenGender.FEMALE;
-        }
-        return CitizenGender.NOT_SPECIFIED;
-    }
 
 
     private String getCitizenErrorInfo(String cardType, String idCard, String idName, String address, String village, Set<String> idCardSet, Map<String, String> villageMap){

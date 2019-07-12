@@ -1,6 +1,7 @@
 package com.hitales.national.ganzhou.syncdata.common;
 
 import com.google.common.collect.Lists;
+import com.hitales.commons.enums.EnumCollector;
 import com.hitales.commons.enums.YesNo;
 import com.hitales.national.ganzhou.syncdata.dao.CitizenServeTagDao;
 import com.hitales.national.ganzhou.syncdata.entity.*;
@@ -8,7 +9,10 @@ import com.hitales.national.ganzhou.syncdata.enums.*;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.util.StringUtils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -23,8 +27,8 @@ public class PersonConverter {
 
     private PersonConverter(){}
 
-    private Person person;
-    private PersonTag personTag;
+//    private Person person;
+//    private PersonTag personTag;
 
     private Citizen citizen;
 
@@ -128,22 +132,31 @@ public class PersonConverter {
         return citizen;
     }
 
+    /**
+     * 居民基础信息转换
+     * @param person
+     * @param personTag
+     * @return
+     */
     private Citizen convertCitizen(Person person,PersonTag personTag){
         Citizen citizen=new Citizen();
         citizen.setCrowds(Lists.newArrayList());
-        citizen.setBirthday(null);person.getBirthday();
-        citizen.setBloodTypeAbo(BloodTypeABO.TYPE_O);person.getBloodType();
-        citizen.setDisabilityState(null);person.getCj1();//cj_1到cj_5
-        citizen.setEducationDegree(EducationDegree.JUNIOR_COLLEGE_EDUCATION);person.getEducation();
-        citizen.setContactName(null);person.getLinkMan();
-        citizen.setContactPhone(null);person.getLinkPhone();
-        citizen.setBloodTypeRh(BloodTypeRH.TYPE_UNKNOWN);person.getRhBlood();
-        citizen.setResidentType(ResidentType.NON_REGISTERED);person.getSHomedd();//多一个流动人口
-        citizen.setMaritalState(MaritalState.UNMARRIED);person.getSMarry();
-        citizen.setOccupationType(OccupationType.BUSINESS);person.getSOccupation();
-        citizen.setGender(CitizenGender.FEMALE);person.getSex();
+
+        IdCard idCard=IdCard.tryParse(person.getIdno());
+
+        citizen.setBirthday( idCard.getBirthday().toDate() );;
+        citizen.setBloodTypeAbo( parseEnum(BloodTypeABO.class,person.getBloodType()) );
+        citizen.setDisabilityState( parseEnums(DisabilityState.class,person,"cj",Lists.newArrayList("1","2","3","4","5")) );//key没对齐,差1
+        citizen.setEducationDegree( parseEnum(EducationDegree.class,person.getEducation()) );
+        citizen.setContactName( person.getLinkMan() );
+        citizen.setContactPhone( person.getLinkPhone() );
+        citizen.setBloodTypeRh( parseEnum(BloodTypeRH.class,person.getRhBlood()) );
+        citizen.setResidentType( parseEnum(ResidentType.class,person.getSHomedd()) );//多一个流动人口
+        citizen.setMaritalState( parseEnum(MaritalState.class,person.getSMarry()) );
+        citizen.setOccupationType( parseEnum(OccupationType.class,person.getSOccupation()) );
+        citizen.setGender(ConvertUtil.getGender(idCard.getGender()));
         citizen.setWorkUnit(person.getWorkunit());
-        citizen.setMedicalPayment(MedicalPayment.COMMERCIAL_MEDICAL_INSURANCE);person.getYbtype();//有两个
+        citizen.setMedicalPayment( parseEnum(MedicalPayment.class,person.getYbtype()) );//有两个
 
 
         // 残疾状况
@@ -162,19 +175,78 @@ public class PersonConverter {
         return citizenServiceTag(citizen,personTag);
     }
 
+    /**
+     *  枚举值转枚举对象
+     * @param clazz 枚举类
+     * @param value 值
+     * @param <T>
+     * @return
+     */
+    private <T> T parseEnum(Class clazz,String value){
+        try {
+            return EnumCollector.forClass(clazz).keyOf(Integer.parseInt(value));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
+     * 枚举值列表转枚举对象列表
+     * @param clazz 枚举类
+     * @param person 居民
+     * @param propertyPrefix 属性前缀
+     * @param propertyPostfixs 属性后缀列表
+     * @param <T>
+     * @return
+     */
+    private <T> List<T> parseEnums(Class clazz,Person person,String propertyPrefix,List<String> propertyPostfixs){
+        List<T> list=Lists.newArrayList();
+        try {
+            BeanWrapper wrapper = new BeanWrapperImpl(person);
+            for (String propertyPostfix : propertyPostfixs) {
+                Object value=wrapper.getPropertyValue(propertyPrefix+propertyPostfix);
+                String strVal=value==null?"":value.toString();
+                T item=parseEnum(clazz,strVal);
+                if(item!=null){
+                    list.add(item);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+
+    /**
+     * 居民健康档案转换
+     * @param person
+     * @param personTag
+     * @return
+     */
     private CitizenEhr convertEhr(Person person,PersonTag personTag){
         CitizenEhr ehr=new CitizenEhr();
-        ehr.setDrugAllergyHistory(null);person.getGms1();//gms1到gms3
-        ehr.setExposureHistory(null);person.getSBls0();//s_bls0到s_bls1
-        ehr.setHabitatDrinkingWater(HabitatDrinkingWater.FILTERED_WATER);person.getShYs();
-        ehr.setHabitatFuelType(HabitatFuelType.COAL);person.getShRllx();
-        ehr.setHabitatKitchenExhaustFacility(HabitatKitchenExhaustFacility.CHIMNEY);person.getShCfpfss();
-        ehr.setHabitatLivestockBar(HabitatLivestockBar.INDOOR);person.getShQxl();
-        ehr.setHabitatToilet(HabitatToilet.SANITARY_TOILET);person.getShCs();
+        ehr.setDrugAllergyHistory( parseEnums(DrugAllergyType.class,person,"gms",Lists.newArrayList("1","2","3")) );//key没对齐,差1
+        ehr.setExposureHistory( parseEnums(ExposureType.class,person,"sBls",Lists.newArrayList("0","1")) );//key没对齐,差1
+        ehr.setHabitatDrinkingWater( parseEnum(HabitatDrinkingWater.class,person.getShYs()) );
+        ehr.setHabitatFuelType( parseEnum(HabitatFuelType.class,person.getShRllx()) );
+        ehr.setHabitatKitchenExhaustFacility( parseEnum(HabitatKitchenExhaustFacility.class,person.getShCfpfss()) );
+        ehr.setHabitatLivestockBar( parseEnum(HabitatLivestockBar.class,person.getShQxl()) );
+        ehr.setHabitatToilet( parseEnum(HabitatToilet.class,person.getShCs()) );
 
         return ehr;
     }
 
+    /**
+     * 居民家族史转换
+     * @param person
+     * @param personTag
+     * @return
+     */
     private List<CitizenEhrFamilyHistory> convertFamilyHistories(Person person,PersonTag personTag){
         List<CitizenEhrFamilyHistory> familyHistories= Lists.newArrayList();
 
@@ -186,8 +258,12 @@ public class PersonConverter {
         return familyHistories;
     }
 
-
-
+    /**
+     * 居民遗传史转换
+     * @param person
+     * @param personTag
+     * @return
+     */
     private List<CitizenEhrGeneticHistory> convertGeneticHistories(Person person,PersonTag personTag){
         if(!"2".equals(person.getYcbsHave())){
             return null;
@@ -203,48 +279,124 @@ public class PersonConverter {
         return geneticHistories;
     }
 
+    /**
+     * 居民既往史转换
+     * @param person
+     * @param personTag
+     * @return
+     */
     private List<CitizenEhrMedicalHistory> convertMedicalHistories(Person person,PersonTag personTag){
         if(!"2".equals(person.getYcbsHave())){
             return null;
         }
 
-//        `jws_qz_mm1` varchar(100) DEFAULT '' COMMENT '既往史-疾病-确诊时间月1',	jws_qz_mm1到jws_qz_mm6
-//        `jws_qz_yy1` varchar(100) DEFAULT '' COMMENT '既往史-疾病-确诊时间年1',	jws_qz_yy1到jws_qz_yy6
-//        `jws_s_zg1` varchar(100) DEFAULT '' COMMENT '既往史-疾病1： 1 无 2 高血压 3 糖尿病 4 冠心病 5 慢性阻塞性肺疾病 6 恶性肿瘤 7 脑卒中 8 严重精神障碍 9 结核病 10 肝炎 11 其他法定传染病 12 职业病 13 其他',	jws_s_zg1到jws_s_zg6
-
-
-//        `ss_have` varchar(100) DEFAULT '' COMMENT '既往史-手术-有无：	 1 无 2 有',
-//                `ss_mc_1` varchar(100) DEFAULT '' COMMENT '既往史-手术1名称',	ss_mc_1到ss_mc_2
-//        `ss_time_1` varchar(100) DEFAULT '' COMMENT '既往史-手术1时间',	ss_time_1到ss_time_2
-//        `status` varchar(100) DEFAULT '' COMMENT '档案状态',
-//                `sx_have` varchar(100) DEFAULT '' COMMENT '既往史-输血-有无：	 1 无 2 有',
-//                `sx_time_1` varchar(100) DEFAULT '' COMMENT '既往史-输血1时间',	sx_time_1到sx_time_2
-//        `sx_yy_1` varchar(100) DEFAULT '' COMMENT '既往史-输血1原因',	sx_yy_1到sx_yy_2
-//        `workunit` varchar(100) DEFAULT '' COMMENT '工作单位',
-//                `ws_have` varchar(100) DEFAULT '' COMMENT '既往史-外伤-有无：	 1 无 2 有',
-//                `ws_mc_1` varchar(100) DEFAULT '' COMMENT '既往史-外伤1名称',	ws_mc_1到ws_mc_2
-//        `ws_time_1` varchar(100) DEFAULT '' COMMENT '既往史-外伤1时间',	ws_time_1到ws_time_2
-
-
         List<CitizenEhrMedicalHistory> medicalHistories= Lists.newArrayList();
 
-        CitizenEhrGeneticHistory geneticHistory=new CitizenEhrGeneticHistory();
-        geneticHistory.setName(person.getYcbsStr());
+        convertMedicalDiseaseHistory(person,medicalHistories);
+        convertMedicalHistory("ssHave","ssMc","ssTime",MedicalHistoryType.DISEASE,person,medicalHistories);
+        convertMedicalHistory("sxHave","sxYy","sxTime",MedicalHistoryType.BLOOD_TRANS,person,medicalHistories);
+        convertMedicalHistory("wsHave","wsMc","wsTime",MedicalHistoryType.WOUND,person,medicalHistories);
 
-        geneticHistories.add(geneticHistory);
+
 
         return medicalHistories;
     }
 
+    /**
+     * 居民既往疾病史转换
+     * @param person
+     * @param medicalHistories
+     */
+    private void convertMedicalDiseaseHistory(Person person, List<CitizenEhrMedicalHistory> medicalHistories){
+        BeanWrapper wrapper = new BeanWrapperImpl(person);
+        for (int i = 1; i <=6 ; i++) {
+            Object year=wrapper.getPropertyValue("jwsQzYy"+1);
+            Object month=wrapper.getPropertyValue("jwsQzMm"+1);
+            Object disease=wrapper.getPropertyValue("jwsSZg"+1);
+            if(year!=null&&month!=null&&disease!=null){
+                String yearStr=year.toString();
+                String monthStr=month.toString();
+                String diseaseStr=disease.toString();
+                if(!StringUtils.isEmpty(yearStr)&&!StringUtils.isEmpty(monthStr)&&!StringUtils.isEmpty(diseaseStr)){
+                    Date confirmDate=null;
+                    try {
+                        confirmDate= new SimpleDateFormat("yyyy-MM").parse(yearStr+"-"+monthStr);
+                    } catch (ParseException e) {
+                       continue;
+                    }
 
+                    CitizenEhrMedicalHistory history=new CitizenEhrMedicalHistory();
+                    history.setDisease( parseEnum(CitizenMedicalDisease.class,diseaseStr) ); //我们这边没有无和其他
+                    history.setConfirmDate(confirmDate);
+                    history.setType(MedicalHistoryType.DISEASE);
+
+                    medicalHistories.add(history);
+                }
+            }
+
+        }
+
+    }
+
+    /**
+     * 居民既往史(手术、输血、外伤)转换
+     * @param havePropertyName
+     * @param namePropertyName
+     * @param timePropertyName
+     * @param type
+     * @param person
+     * @param medicalHistories
+     */
+    private void convertMedicalHistory(String havePropertyName,String namePropertyName,String timePropertyName,MedicalHistoryType type,Person person, List<CitizenEhrMedicalHistory> medicalHistories){
+
+        BeanWrapper wrapper = new BeanWrapperImpl(person);
+        Object have=wrapper.getPropertyValue(havePropertyName);
+        if(!"2".equals(have)){
+            return;
+        }
+
+        for (int i = 1; i <=2 ; i++) {
+            Object name=wrapper.getPropertyValue(namePropertyName+1);
+            Object date=wrapper.getPropertyValue(timePropertyName+1);
+
+            if(name!=null&&date!=null){
+                String nameStr=name.toString();
+                String dateStr=date.toString();
+                if(!StringUtils.isEmpty(nameStr)&&!StringUtils.isEmpty(dateStr)){
+
+                    Date confirmDate=null;
+                    try {
+                        confirmDate= new SimpleDateFormat("yyyy-MM-dd").parse(dateStr);
+                    } catch (ParseException e) {
+                        continue;
+                    }
+
+                    CitizenEhrMedicalHistory history=new CitizenEhrMedicalHistory();
+                    history.setName(nameStr);
+                    history.setConfirmDate(confirmDate);
+                    history.setType(type);
+
+                    medicalHistories.add(history);
+                }
+            }
+
+        }
+
+    }
+
+
+    /**
+     * 居民家族史转换（按家庭关系）
+     * @param relationship
+     * @param propertyPrefix
+     * @param person
+     * @param familyHistories
+     */
     private void convertFamilyHistory(MedicalFamilyRelationship relationship,String propertyPrefix,Person person, List<CitizenEhrFamilyHistory> familyHistories) {
         CitizenEhrFamilyHistory familyHistory=new CitizenEhrFamilyHistory();
         familyHistory.setType(relationship);
-        BeanWrapper wrapper = new BeanWrapperImpl(person);
-        for (int i=1;i<=6;i++){
-            wrapper.getPropertyValue(propertyPrefix+i);
-            familyHistory.setDisease(Lists.newArrayList(FamilyMedicalDisease.CORONARY_DISEASE));person.getJzsFa1();//jzs_fa_1到jzs_fa_6;我们这边没有无
-        }
+        familyHistory.setDisease( parseEnums(FamilyMedicalDisease.class,person,propertyPrefix,Lists.newArrayList("1","2","3","4","5","6")) );//我们这边没有无和其他
+
         familyHistories.add(familyHistory);
     }
 
