@@ -8,7 +8,6 @@ hitales:
 #        jdbc-url: jdbc:mysql://rm-bp10njuk48vd2n4bzpo.mysql.rds.aliyuncs.com:3306/national_service?&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull
         jdbc-url: jdbc:mysql://localhost:3306/national_service?&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull
         username: root
-#        password: Hitales20128
         password: root
         driverClassName: com.mysql.cj.jdbc.Driver
         maximumPoolSize: 5
