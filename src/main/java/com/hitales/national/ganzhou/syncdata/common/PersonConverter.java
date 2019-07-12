@@ -6,6 +6,7 @@ import com.hitales.commons.enums.YesNo;
 import com.hitales.national.ganzhou.syncdata.dao.CitizenServeTagDao;
 import com.hitales.national.ganzhou.syncdata.entity.*;
 import com.hitales.national.ganzhou.syncdata.enums.*;
+import com.hitales.national.ganzhou.syncdata.service.CommonToolsService;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -158,6 +159,14 @@ public class PersonConverter {
         citizen.setWorkUnit(person.getWorkunit());
         citizen.setMedicalPayment( parseEnum(MedicalPayment.class,person.getYbtype()) );//有两个
 
+        citizen.setIdName(person.getName());
+        citizen.setLocation(Long.parseLong(person.getDistrictCode()));
+        citizen.setAddress(person.getNowAddress());
+        citizen.setIdType(IdType.ID);
+        citizen.setNation(CommonToolsService.getNation(person.getSNation()));
+        if(Phone.match(person.getSPhone())) {
+            citizen.setPhone(person.getSPhone());
+        }
 
         // 残疾状况
         if(Strings.isNotBlank(person.getCj1()) && !"1".equals(person.getCj1())){
