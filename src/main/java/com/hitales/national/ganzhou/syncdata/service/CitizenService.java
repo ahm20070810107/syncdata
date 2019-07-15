@@ -17,6 +17,10 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +50,11 @@ public class CitizenService {
     @Autowired
     private PersonRepository personRepository;
 
+
+    private final Sort sort = new Sort(Sort.Direction.ASC,"idno");
+    private final int pageSize = 1000;
+
+
     private final String CARD_TYPE = "身份证";
     private Person transPerson(Person person){
 
@@ -61,35 +70,36 @@ public class CitizenService {
 
         Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, "居民错误信息", "原始行号,证件类型,证件号码,证件姓名,民族,家庭住址,本人电话,所属自然村,备注", ",");
 
-        List<Person> personList = personRepository.findByDistrictCodeIn(Lists.newArrayList("360722106204","360722106216"));
-
         int verifyRowCount = 1;
         Map<String, String> villageMap = new HashMap<>();
         Set<String> idCardSet = new HashSet<>();
-        List<Citizen> citizens = new ArrayList<>();
-        // 存储入数据库
-        int SAVE_COUNT = 500;
-        for(Person person : personList){
-            Person sPerson = transPerson(person);
-
-            String errorInfo = getCitizenErrorInfo(CARD_TYPE, sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getDistrictCode(), idCardSet, villageMap);
-
-            if(!Strings.isNullOrEmpty(errorInfo)){
-                Row verifyRow = verifySheet.createRow(verifyRowCount);
-                commonToolsService.fillSheetRow(verifyRowCount ++ ,verifyRow,CARD_TYPE, sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getSPhone(), sPerson.getDistrictCode(),errorInfo);
-                 // 若有错则不做保存
-                continue;
+        for (int i = 0;; i++) {
+            Pageable pageable = PageRequest.of(i,pageSize,sort);
+            Page<Person> personPage = personRepository.findByDistrictCodeIn(Lists.newArrayList("360722106204","360722106216"),pageable);
+            if(personPage.getContent().isEmpty()){
+                break;
             }
-            if(!toDbFlag){
-                continue;
-            }
-            citizens.add(personToCitizen(sPerson));
-            if(citizens.size() >= SAVE_COUNT){
-                citizenDao.saveAll(citizens);
-                citizens = new ArrayList<>();
+
+            // 存储入数据库
+            for(Person person : personPage.getContent()){
+                Person sPerson = transPerson(person);
+
+                String errorInfo = getCitizenErrorInfo(CARD_TYPE, sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getDistrictCode(), idCardSet, villageMap);
+
+                if(!Strings.isNullOrEmpty(errorInfo)){
+                    Row verifyRow = verifySheet.createRow(verifyRowCount);
+                    commonToolsService.fillSheetRow(verifyRowCount ++ ,verifyRow,CARD_TYPE, sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getSPhone(), sPerson.getDistrictCode(),errorInfo);
+                    // 若有错则不做保存
+                    continue;
+                }
+                if(!toDbFlag){
+                    continue;
+                }
+
+                // save person
             }
         }
-        citizenDao.saveAll(citizens);
+
 
         commonToolsService.saveExcelFile(verifyWorkbook, "居民错误信息列表");
         return true;

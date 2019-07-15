@@ -14,10 +14,7 @@ import org.springframework.util.StringUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @Author: jingang
@@ -218,7 +215,7 @@ public class PersonConverter {
                 Object value=wrapper.getPropertyValue(propertyPrefix+propertyPostfix);
                 String strVal=value==null?"":value.toString();
                 T item=parseEnum(clazz,strVal);
-                if(item!=null){
+                if(Objects.nonNull(item)){
                     list.add(item);
                 }
             }
