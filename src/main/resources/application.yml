@@ -9,7 +9,7 @@ hitales:
         jdbc-url: jdbc:mysql://localhost:3306/national_service?&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull
         username: root
         password: root
-        driverClassName: com.mysql.cj.jdbc.Driver
+        driverClassName: com.mysql.jdbc.Driver
         maximumPoolSize: 5
         minimumIdle: 2
         maxLifetime: 50000

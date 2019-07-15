@@ -51,26 +51,26 @@ public class ScanningCoordinator {
 	}
 
 	public void coordinateScan(
-								  ManagedResourcesImpl managedResources,
-								  MetadataBuildingOptions options,
-								  XmlMappingBinderAccess xmlMappingBinderAccess) {
+			ManagedResourcesImpl managedResources,
+			MetadataBuildingOptions options,
+			XmlMappingBinderAccess xmlMappingBinderAccess) {
 		if (options.getScanEnvironment() == null) {
 			return;
 		}
 
 		final ClassLoaderService classLoaderService = options.getServiceRegistry().getService(ClassLoaderService.class);
 		final ClassLoaderAccess classLoaderAccess = new ClassLoaderAccessImpl(
-																				 options.getTempClassLoader(),
-																				 classLoaderService
+				options.getTempClassLoader(),
+				classLoaderService
 		);
 
 		// NOTE : the idea with JandexInitializer/JandexInitManager was to allow adding classes
 		// to the index as we discovered them via scanning and .  Currently
 		final Scanner scanner = buildScanner(options, classLoaderAccess);
 		final ScanResult scanResult = scanner.scan(
-			options.getScanEnvironment(),
-			options.getScanOptions(),
-			StandardScanParameters.INSTANCE
+				options.getScanEnvironment(),
+				options.getScanOptions(),
+				StandardScanParameters.INSTANCE
 		);
 
 		HibernateScannerWrapper wrapper = HibernateScannerWrapper.of(scanResult);
@@ -96,11 +96,11 @@ public class ScanningCoordinator {
 			if (Scanner.class.isInstance(scannerSetting)) {
 				if (archiveDescriptorFactory != null) {
 					throw new IllegalStateException(
-													   "A Scanner instance and an ArchiveDescriptorFactory were both specified; please " +
-														   "specify one or the other, or if you need to supply both, Scanner class to use " +
-														   "(assuming it has a constructor accepting a ArchiveDescriptorFactory).  " +
-														   "Alternatively, just pass the ArchiveDescriptorFactory during your own " +
-														   "Scanner constructor assuming it is statically known."
+							"A Scanner instance and an ArchiveDescriptorFactory were both specified; please " +
+									"specify one or the other, or if you need to supply both, Scanner class to use " +
+									"(assuming it has a constructor accepting a ArchiveDescriptorFactory).  " +
+									"Alternatively, just pass the ArchiveDescriptorFactory during your own " +
+									"Scanner constructor assuming it is statically known."
 					);
 				}
 				return (Scanner) scannerSetting;
@@ -122,15 +122,15 @@ public class ScanningCoordinator {
 						return constructor.newInstance(archiveDescriptorFactory);
 					} catch (Exception e) {
 						throw new IllegalStateException(
-														   "Error trying to instantiate custom specified Scanner [" +
-															   scannerImplClass.getName() + "]",
-														   e
+								"Error trying to instantiate custom specified Scanner [" +
+										scannerImplClass.getName() + "]",
+								e
 						);
 					}
 				} catch (NoSuchMethodException e) {
 					throw new IllegalArgumentException(
-														  "Configuration named a custom Scanner and a custom ArchiveDescriptorFactory, but " +
-															  "Scanner impl did not define a constructor accepting ArchiveDescriptorFactory"
+							"Configuration named a custom Scanner and a custom ArchiveDescriptorFactory, but " +
+									"Scanner impl did not define a constructor accepting ArchiveDescriptorFactory"
 					);
 				}
 			} else {
@@ -142,9 +142,9 @@ public class ScanningCoordinator {
 						return constructor.newInstance(StandardArchiveDescriptorFactory.INSTANCE);
 					} catch (Exception e) {
 						throw new IllegalStateException(
-														   "Error trying to instantiate custom specified Scanner [" +
-															   scannerImplClass.getName() + "]",
-														   e
+								"Error trying to instantiate custom specified Scanner [" +
+										scannerImplClass.getName() + "]",
+								e
 						);
 					}
 				} catch (NoSuchMethodException e) {
@@ -154,15 +154,15 @@ public class ScanningCoordinator {
 							return constructor.newInstance();
 						} catch (Exception e2) {
 							throw new IllegalStateException(
-															   "Error trying to instantiate custom specified Scanner [" +
-																   scannerImplClass.getName() + "]",
-															   e2
+									"Error trying to instantiate custom specified Scanner [" +
+											scannerImplClass.getName() + "]",
+									e2
 							);
 						}
 					} catch (NoSuchMethodException ignore) {
 						throw new IllegalArgumentException(
-															  "Configuration named a custom Scanner, but we were unable to locate " +
-																  "an appropriate constructor"
+								"Configuration named a custom Scanner, but we were unable to locate " +
+										"an appropriate constructor"
 						);
 					}
 				}
@@ -171,10 +171,10 @@ public class ScanningCoordinator {
 	}
 
 	public void applyScanResultsToManagedResources(
-													  ManagedResourcesImpl managedResources,
-													  ScanResult scanResult,
-													  MetadataBuildingOptions options,
-													  XmlMappingBinderAccess xmlMappingBinderAccess) {
+			ManagedResourcesImpl managedResources,
+			ScanResult scanResult,
+			MetadataBuildingOptions options,
+			XmlMappingBinderAccess xmlMappingBinderAccess) {
 
 		final ScanEnvironment scanEnvironment = options.getScanEnvironment();
 		final ServiceRegistry serviceRegistry = options.getServiceRegistry();
@@ -198,8 +198,8 @@ public class ScanningCoordinator {
 			final URL url = classLoaderService.locateResource(name);
 			if (url == null) {
 				throw new MappingException(
-											  "Unable to resolve explicitly named mapping-file : " + name,
-											  new Origin(SourceType.RESOURCE, name)
+						"Unable to resolve explicitly named mapping-file : " + name,
+						new Origin(SourceType.RESOURCE, name)
 				);
 			}
 			final UrlInputStreamAccess inputStreamAccess = new UrlInputStreamAccess(url);
@@ -210,17 +210,17 @@ public class ScanningCoordinator {
 		// classes and packages ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 		final List<String> unresolvedListedClassNames = scanEnvironment.getExplicitlyListedClassNames() == null
-															? new ArrayList<String>()
-															: new ArrayList<String>(scanEnvironment.getExplicitlyListedClassNames());
+				? new ArrayList<String>()
+				: new ArrayList<String>(scanEnvironment.getExplicitlyListedClassNames());
 
 		for (ClassDescriptor classDescriptor : scanResult.getLocatedClasses()) {
 			if (classDescriptor.getCategorization() == ClassDescriptor.Categorization.CONVERTER) {
 				// converter classes are safe to load because we never enhance them,
 				// and notice we use the ClassLoaderService specifically, not the temp ClassLoader (if any)
 				managedResources.addAttributeConverterDefinition(
-					AttributeConverterDefinition.from(
-						classLoaderService.<AttributeConverter>classForName(classDescriptor.getName())
-					)
+						AttributeConverterDefinition.from(
+								classLoaderService.<AttributeConverter>classForName(classDescriptor.getName())
+						)
 				);
 			} else if (classDescriptor.getCategorization() == ClassDescriptor.Categorization.MODEL) {
 				managedResources.addAnnotatedClassName(classDescriptor.getName());
@@ -255,9 +255,9 @@ public class ScanningCoordinator {
 			}
 
 			log.debugf(
-				"Unable to resolve class [%s] named in persistence unit [%s]",
-				unresolvedListedClassName,
-				scanEnvironment.getRootUrl()
+					"Unable to resolve class [%s] named in persistence unit [%s]",
+					unresolvedListedClassName,
+					scanEnvironment.getRootUrl()
 			);
 		}
 	}

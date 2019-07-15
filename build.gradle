@@ -1,9 +1,24 @@
-plugins {
-    id 'org.springframework.boot' version '2.1.6.RELEASE'
-    id 'java'
+buildscript {
+    repositories {
+        maven { url 'http://114.55.40.105:8081/repository/gradle-plugin/' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+    }
+    dependencies {
+        classpath 'io.spring.gradle:dependency-management-plugin:1.0.0.RELEASE'
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.0.6.RELEASE'
+    }
 }
 
+plugins {
+//    id "com.google.cloud.tools.jib" version "0.9.10"
+    id 'net.ltgt.apt-idea' version '0.20'
+}
+
+apply plugin: 'idea'
+apply plugin: 'java'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'net.ltgt.apt-idea'
 
 group = 'com.hitales.national.ganzhou'
 version = '0.0.1-SNAPSHOT'
