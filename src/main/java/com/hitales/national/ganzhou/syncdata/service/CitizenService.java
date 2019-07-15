@@ -69,7 +69,7 @@ public class CitizenService {
 
 
     private final Sort sort = new Sort(Sort.Direction.ASC,"idno");
-    private final int pageSize = 3000;
+    private final int pageSize = 1000;
 
     private final String CARD_TYPE = "身份证";
 
@@ -80,7 +80,7 @@ public class CitizenService {
         return person;
     }
 
-    public boolean importToDb(Boolean toDbFlag){
+    public String importToDb(Boolean toDbFlag){
         // 信丰县id
         Long countyId = getCountyId(360722000000000L);
         SXSSFWorkbook verifyWorkbook = new SXSSFWorkbook(CommonToolsService.MAX_READ_SIZE);
@@ -116,9 +116,8 @@ public class CitizenService {
                 savePerson(person, personTag,countyId);
             }
         }
-
         commonToolsService.saveExcelFile(verifyWorkbook, "居民错误信息列表");
-        return true;
+        return String.format("居民信息转换完成,共%d条居民信息有问题未处理，详情请查看[verify.output.path]下excel",verifyRowCount - 1);
     }
 
   @javax.transaction.Transactional
