@@ -162,9 +162,8 @@ public class CommonToolsService {
         }
     }
 
-    public void fillSheetRow(int index,Row row, String ... params){
-        int cellIndex = 1;
-        row.createCell(0).setCellValue(index);
+    public void fillSheetRow(Row row, String ... params){
+        int cellIndex = 0;
         for(String param : params){
             row.createCell(cellIndex++).setCellValue(param);
         }

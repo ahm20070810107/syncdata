@@ -165,6 +165,9 @@ public class PersonConverter {
             citizen.setPhone(person.getSPhone());
         }
 
+        // 状态
+        // TODO
+
         // 残疾状况
         if(Strings.isNotBlank(person.getCj1()) && !"1".equals(person.getCj1())){
             citizen.setCrowdDisabled(YesNo.YES);

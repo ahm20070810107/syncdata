@@ -38,6 +38,9 @@ public class CitizenService {
     private CitizenDao citizenDao;
 
     @Autowired
+    private PersonListRepository personListRepository;
+
+    @Autowired
     private GB2260Dao gb2260Dao;
 
     @Autowired
@@ -85,7 +88,7 @@ public class CitizenService {
         Long countyId = getCountyId(360722000000000L);
         SXSSFWorkbook verifyWorkbook = new SXSSFWorkbook(CommonToolsService.MAX_READ_SIZE);
 
-        Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, "居民错误信息", "原始行号,证件类型,证件号码,证件姓名,民族,家庭住址,本人电话,所属自然村,备注", ",");
+        Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, "居民错误信息", "编号,工作编号,姓名,身份证号,出生日期,现住址,联系电话,责任医生,建档机构,状态,备注", ",");
 
         int verifyRowCount = 1;
         Map<String, String> villageMap = new HashMap<>();
@@ -104,7 +107,9 @@ public class CitizenService {
 
                 if(!Strings.isNullOrEmpty(errorInfo)){
                     Row verifyRow = verifySheet.createRow(verifyRowCount);
-                    commonToolsService.fillSheetRow(verifyRowCount ++ ,verifyRow,CARD_TYPE, sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getSPhone(), sPerson.getDistrictCode(),errorInfo);
+                    PersonList personList = personListRepository.findByPersonid(sPerson.getPersonid()).orElse(new PersonList());
+                    commonToolsService.fillSheetRow(verifyRow,sPerson.getPCardNo(),sPerson.getWCardNo(),sPerson.getName(),sPerson.getIdno(),sPerson.getBirthday(),
+                            sPerson.getNowAddress(), sPerson.getSPhone(),personList.getFzDoctor(), personList.getRecordOName(),"1".equals(sPerson.getStatus())?"正常":"死亡",errorInfo);
                     // 若有错则不做保存
                     continue;
                 }
