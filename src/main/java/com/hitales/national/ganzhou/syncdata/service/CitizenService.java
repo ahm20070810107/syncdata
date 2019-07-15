@@ -2,16 +2,10 @@ package com.hitales.national.ganzhou.syncdata.service;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.hitales.national.ganzhou.syncdata.common.ConvertUtil;
 import com.hitales.national.ganzhou.syncdata.common.IdCard;
-import com.hitales.national.ganzhou.syncdata.common.Phone;
-import com.hitales.national.ganzhou.syncdata.dao.CitizenDao;
-import com.hitales.national.ganzhou.syncdata.dao.GB2260Dao;
-import com.hitales.national.ganzhou.syncdata.dao.PersonRepository;
-import com.hitales.national.ganzhou.syncdata.entity.Citizen;
-import com.hitales.national.ganzhou.syncdata.entity.GB2260;
-import com.hitales.national.ganzhou.syncdata.entity.Person;
-import com.hitales.national.ganzhou.syncdata.enums.IdType;
+import com.hitales.national.ganzhou.syncdata.common.PersonConverter;
+import com.hitales.national.ganzhou.syncdata.dao.*;
+import com.hitales.national.ganzhou.syncdata.entity.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -22,7 +16,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -50,12 +43,36 @@ public class CitizenService {
     @Autowired
     private PersonRepository personRepository;
 
+    @Autowired
+    private PersonTagRepository personTagRepository;
+
+    @Autowired
+    private CitizenServeTagMappingDao citizenServeTagMappingDao;
+
+    @Autowired
+    private CitizenServeTagDao citizenServeTagDao;
+
+    @Autowired
+    private CountyDao countyDao;
+
+    @Autowired
+    private CitizenEhrDao citizenEhrDao;
+
+    @Autowired
+    private CitizenEhrFamilyHistoryDao citizenEhrFamilyHistoryDao;
+
+    @Autowired
+    private CitizenEhrGeneticHistoryDao citizenEhrGeneticHistoryDao;
+
+    @Autowired
+    private CitizenEhrMedicalHistoryDao citizenEhrMedicalHistoryDao;
+
 
     private final Sort sort = new Sort(Sort.Direction.ASC,"idno");
-    private final int pageSize = 1000;
-
+    private final int pageSize = 3000;
 
     private final String CARD_TYPE = "身份证";
+
     private Person transPerson(Person person){
 
         person.setDistrictCode(person.getDistrictCode() +"001");
@@ -63,9 +80,9 @@ public class CitizenService {
         return person;
     }
 
-    @Transactional
     public boolean importToDb(Boolean toDbFlag){
-
+        // 信丰县id
+        Long countyId = getCountyId(360722000000000L);
         SXSSFWorkbook verifyWorkbook = new SXSSFWorkbook(CommonToolsService.MAX_READ_SIZE);
 
         Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, "居民错误信息", "原始行号,证件类型,证件号码,证件姓名,民族,家庭住址,本人电话,所属自然村,备注", ",");
@@ -80,7 +97,6 @@ public class CitizenService {
                 break;
             }
 
-            // 存储入数据库
             for(Person person : personPage.getContent()){
                 Person sPerson = transPerson(person);
 
@@ -95,36 +111,51 @@ public class CitizenService {
                 if(!toDbFlag){
                     continue;
                 }
-
                 // save person
+                PersonTag personTag = personTagRepository.findByPersonid(person.getPersonid()).orElse(new PersonTag());
+                savePerson(person, personTag,countyId);
             }
         }
-
 
         commonToolsService.saveExcelFile(verifyWorkbook, "居民错误信息列表");
         return true;
     }
 
-  private Citizen personToCitizen(Person person){
-      Citizen citizen = new Citizen();
-      IdCard cardInfo = IdCard.tryParse(person.getIdno());
-      citizen.setGender(ConvertUtil.getGender(cardInfo.getGender()));
-      citizen.setBirthday(cardInfo.getBirthday().toDate());
-      citizen.setIdType(IdType.ID);
-      citizen.setIdNo(person.getIdno());
-      citizen.setAddress(person.getNowAddress());
-      citizen.setNation(CommonToolsService.getNation(person.getSNation()));
-      if(Phone.match(person.getSPhone())) {
-          citizen.setPhone(person.getSPhone());
-      }
-      citizen.setIdName(person.getName());
-      citizen.setLocation(Long.parseLong(person.getDistrictCode()));
-      return citizen;
-  }
+  @javax.transaction.Transactional
+  void savePerson(Person person, PersonTag personTag,Long countyId){
+       PersonConverter personConverter = PersonConverter.convert(person,personTag,citizenServeTagDao,countyId);
+       Citizen citizen = personConverter.getCitizen();
+       citizenDao.save(citizen);
 
+       // 居民ehr
+      personConverter.getCitizenEhr().setCitizenId(citizen.getId());
+      citizenEhrDao.save(personConverter.getCitizenEhr());
 
+      // 服务标签
+      personConverter.getCitizenServeTag().forEach(citizenTag->citizenTag.setCitizenId(citizen.getId()));
+      citizenServeTagMappingDao.saveAll(personConverter.getCitizenServeTag());
 
-    private String getCitizenErrorInfo(String cardType, String idCard, String idName, String address, String village, Set<String> idCardSet, Map<String, String> villageMap){
+      // 家族史
+      personConverter.getFamilyHistories().forEach(family-> family.setEhrId(personConverter.getCitizenEhr().getId()));
+      citizenEhrFamilyHistoryDao.saveAll(personConverter.getFamilyHistories());
+
+      // 遗传史
+      personConverter.getGeneticHistories().forEach(genetic->genetic.setEhrId(personConverter.getCitizenEhr().getId()));
+      citizenEhrGeneticHistoryDao.saveAll(personConverter.getGeneticHistories());
+
+      // 用药史
+      personConverter.getMedicalHistories().forEach(medical->medical.setEhrId(personConverter.getCitizenEhr().getId()));
+      citizenEhrMedicalHistoryDao.saveAll(personConverter.getMedicalHistories());
+
+   }
+
+   private Long getCountyId(Long location){
+        return countyDao.findByLocation(location)
+                .orElseThrow(()->new RuntimeException("信丰县在数据库中(行政县列表)未找到，请检查！"))
+                .getId();
+   }
+
+   private String getCitizenErrorInfo(String cardType, String idCard, String idName, String address, String village, Set<String> idCardSet, Map<String, String> villageMap){
         Integer count = 1;
         StringBuilder sb = new StringBuilder();
         if(!"身份证".equals(cardType) && !"出生证明".equals(cardType)){
