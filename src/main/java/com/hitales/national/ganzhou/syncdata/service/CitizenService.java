@@ -103,7 +103,7 @@ public class CitizenService {
             for(Person person : personPage.getContent()){
                 Person sPerson = transPerson(person);
 
-                String errorInfo = getCitizenErrorInfo(CARD_TYPE, sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getDistrictCode(), idCardSet, villageMap);
+                String errorInfo = getCitizenErrorInfo(CARD_TYPE,sPerson.getStatus(), sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getDistrictCode(), idCardSet, villageMap);
 
                 if(!Strings.isNullOrEmpty(errorInfo)){
                     Row verifyRow = verifySheet.createRow(verifyRowCount++);
@@ -159,11 +159,14 @@ public class CitizenService {
                 .getId();
    }
 
-   private String getCitizenErrorInfo(String cardType, String idCard, String idName, String address, String village, Set<String> idCardSet, Map<String, String> villageMap){
+   private String getCitizenErrorInfo(String cardType,String status, String idCard, String idName, String address, String village, Set<String> idCardSet, Map<String, String> villageMap){
         Integer count = 1;
         StringBuilder sb = new StringBuilder();
         if(!"身份证".equals(cardType) && !"出生证明".equals(cardType)){
             sb.append(count++).append("、证件类型只能为【身份证】或【出生证明】且不能为空\r\n");
+        }
+        if(Strings.isNullOrEmpty(status)){
+            sb.append(count++).append("、居民状态为待完善\r\n");
         }
         if("身份证".equals(cardType) && Objects.isNull(IdCard.tryParse(idCard))){
             sb.append(count++).append("、身份证号码为空或格式不正确\r\n");
