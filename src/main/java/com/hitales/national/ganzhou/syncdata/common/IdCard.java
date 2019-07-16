@@ -69,6 +69,15 @@ public class IdCard {
 	 * @return
 	 */
 	public static IdCard tryParse(String number) {
+		try {
+			return parse(number);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private static IdCard parse(String number) {
 		// 校验长度
 		if (Strings.isNullOrEmpty(number)) {
 			return null;

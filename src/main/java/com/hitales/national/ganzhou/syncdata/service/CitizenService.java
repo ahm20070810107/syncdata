@@ -114,8 +114,13 @@ public class CitizenService {
 
             for(Person person : personPage.getContent()){
 //                Person sPerson = transPerson(person);
+                if(dealCount == 7113)
+                {
+                    System.out.println("sfs");
+                }
                 String errorInfo = getCitizenErrorInfo(CARD_TYPE,person.getStatus(), person.getIdno(),person.getName(),person.getNowAddress(), person.getDistrictCode(), idCardSet, villageMap);
-                 log.info("正在处理第{}个人信息。。。",dealCount++ );
+
+                log.info("正在处理第{}个人信息。。。",dealCount++ );
                 if(!Strings.isNullOrEmpty(errorInfo)){
                     Row verifyRow = verifySheet.createRow(verifyRowCount++);
                     PersonList personList = personListRepository.findByPersonid(person.getPersonid()).orElse(new PersonList());
