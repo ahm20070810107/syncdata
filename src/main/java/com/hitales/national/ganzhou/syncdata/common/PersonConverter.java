@@ -168,6 +168,11 @@ public class PersonConverter {
 
         // 状态
         // TODO
+        //死亡设置为永久失访
+        if("2".equals(person.getStatus())){
+            citizen.setFollowState(FollowState.MISS_FOREVER);
+            citizen.setLostFollowReason(LostFollowReason.DEAD);
+        }
 
         // 残疾状况
         if(Strings.isNotBlank(person.getCj1()) && !"1".equals(person.getCj1())){
