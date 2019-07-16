@@ -409,8 +409,9 @@ public class PersonConverter {
         CitizenEhrFamilyHistory familyHistory=new CitizenEhrFamilyHistory();
         familyHistory.setType(relationship);
         familyHistory.setDisease( parseEnums(FamilyMedicalDisease.class,person,propertyPrefix,Lists.newArrayList("1","2","3","4","5","6")) );//我们这边没有无和其他
-
-        familyHistories.add(familyHistory);
+        if(!familyHistory.getDisease().isEmpty()){
+            familyHistories.add(familyHistory);
+        }
     }
 
     public Citizen getCitizen() {
