@@ -3,6 +3,8 @@ package com.hitales.national.ganzhou.syncdata.dao;
 import com.hitales.national.ganzhou.syncdata.entity.Village;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -14,4 +16,6 @@ import java.util.Optional;
  */
 public interface VillageRepository extends JpaRepository<Village, Long> {
     Optional<Village> findById(String id);
+
+    List<Village> findByPIdIn(Collection<String> pIds);
 }
