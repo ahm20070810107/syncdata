@@ -157,6 +157,7 @@ public class PersonConverter {
         citizen.setMedicalPayment( parseEnum(MedicalPayment.class,person.getYbtype()) );//有两个
 
         citizen.setIdName(person.getName());
+        citizen.setIdNo(person.getIdno());
         citizen.setLocation(Long.parseLong(person.getDistrictCode()));
         citizen.setAddress(person.getNowAddress());
         citizen.setIdType(IdType.ID);
@@ -192,6 +193,10 @@ public class PersonConverter {
      * @return
      */
     private <T> T parseEnum(Class clazz,String value){
+        if(Strings.isBlank(value)){
+            return null;
+        }
+
         try {
             return EnumCollector.forClass(clazz).keyOf(Integer.parseInt(value));
         } catch (Exception e) {
@@ -274,11 +279,10 @@ public class PersonConverter {
      * @return
      */
     private List<CitizenEhrGeneticHistory> convertGeneticHistories(Person person,PersonTag personTag){
-        if(!"2".equals(person.getYcbsHave())){
-            return null;
-        }
-
         List<CitizenEhrGeneticHistory> geneticHistories= Lists.newArrayList();
+        if(!"2".equals(person.getYcbsHave())){
+            return geneticHistories;
+        }
 
         CitizenEhrGeneticHistory geneticHistory=new CitizenEhrGeneticHistory();
         geneticHistory.setName(person.getYcbsStr());
