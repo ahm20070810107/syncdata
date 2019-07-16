@@ -106,7 +106,7 @@ public class CitizenService {
                 String errorInfo = getCitizenErrorInfo(CARD_TYPE, sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getDistrictCode(), idCardSet, villageMap);
 
                 if(!Strings.isNullOrEmpty(errorInfo)){
-                    Row verifyRow = verifySheet.createRow(verifyRowCount);
+                    Row verifyRow = verifySheet.createRow(verifyRowCount++);
                     PersonList personList = personListRepository.findByPersonid(sPerson.getPersonid()).orElse(new PersonList());
                     commonToolsService.fillSheetRow(verifyRow,sPerson.getPCardNo(),sPerson.getWCardNo(),sPerson.getName(),sPerson.getIdno(),sPerson.getBirthday(),
                             sPerson.getNowAddress(), sPerson.getSPhone(),personList.getFzDoctor(), personList.getRecordOName(),"1".equals(sPerson.getStatus())?"正常":"死亡",errorInfo);

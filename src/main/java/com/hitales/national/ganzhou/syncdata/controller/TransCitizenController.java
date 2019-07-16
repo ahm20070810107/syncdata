@@ -24,7 +24,7 @@ public class TransCitizenController {
     @Autowired
     CitizenService citizenService;
 
-     @GetMapping("citizen")
+    @GetMapping("citizen")
     public String convertCitizen(@RequestParam("toDbFlag") Boolean toDbFlag){
          return citizenService.importToDb(toDbFlag);
      }

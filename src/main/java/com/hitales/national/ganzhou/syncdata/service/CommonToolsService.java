@@ -116,7 +116,7 @@ public class CommonToolsService {
 
 
     public void saveExcelFile(Workbook workbook, String filePathPrefix, String fileSuffix, String suffix ){
-        String savePath = filePathPrefix + "_" + fileSuffix + suffix;
+        String savePath = filePathPrefix + fileSuffix + suffix;
         saveExcelFile(savePath,workbook);
     }
 
