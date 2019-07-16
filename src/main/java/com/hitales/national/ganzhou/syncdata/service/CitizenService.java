@@ -73,6 +73,7 @@ public class CitizenService {
 
     private final Sort sort = new Sort(Sort.Direction.ASC,"idno");
     private final int pageSize = 1000;
+    private final int batchSaveSize = 2000;
 
     private final String CARD_TYPE = "身份证";
 
@@ -93,6 +94,8 @@ public class CitizenService {
         int verifyRowCount = 1;
         int dealCount = 1;
         Map<String, String> villageMap = new HashMap<>();
+        // 用于批量保存档案信息
+        ConvertSaveEntityList convertSaveList = new ConvertSaveEntityList();
         Set<String> idCardSet = new HashSet<>();
         for (int i = 0;; i++) {
             Pageable pageable = PageRequest.of(i,pageSize,sort);
@@ -120,15 +123,27 @@ public class CitizenService {
                 }
                 // save person
                 PersonTag personTag = personTagRepository.findByPersonid(person.getPersonid()).orElse(new PersonTag());
-                savePerson(person, personTag,countyId);
+                savePerson(person, personTag,convertSaveList,countyId);
+                if(convertSaveList.getMedicalHistories().size() >= batchSaveSize || convertSaveList.getFamilyHistories().size() >= batchSaveSize){
+                    batchSaveEntities(convertSaveList);
+                    convertSaveList = new ConvertSaveEntityList();
+                }
             }
         }
+        batchSaveEntities(convertSaveList);
         commonToolsService.saveExcelFile(verifyWorkbook, "居民错误信息列表");
         return String.format("居民信息转换完成,共%d条居民信息有问题未处理，详情请查看[verify.output.path]下excel",verifyRowCount - 1);
     }
 
+  void batchSaveEntities(ConvertSaveEntityList convertSaveList){
+      citizenServeTagMappingDao.saveAll(convertSaveList.getCitizenServeTag());
+      citizenEhrFamilyHistoryDao.saveAll(convertSaveList.getFamilyHistories());
+      citizenEhrGeneticHistoryDao.saveAll(convertSaveList.getGeneticHistories());
+      citizenEhrMedicalHistoryDao.saveAll(convertSaveList.getMedicalHistories());
+  }
+
   @javax.transaction.Transactional
-  void savePerson(Person person, PersonTag personTag,Long countyId){
+  void savePerson(Person person, PersonTag personTag,ConvertSaveEntityList convertSaveList,Long countyId){
        PersonConverter personConverter = PersonConverter.convert(person,personTag,citizenServeTagDao,countyId);
        Citizen citizen = personConverter.getCitizen();
        citizenDao.save(citizen);
@@ -139,21 +154,21 @@ public class CitizenService {
 
       // 服务标签
       personConverter.getCitizenServeTag().forEach(citizenTag->citizenTag.setCitizenId(citizen.getId()));
-      citizenServeTagMappingDao.saveAll(personConverter.getCitizenServeTag());
+      convertSaveList.getCitizenServeTag().addAll(personConverter.getCitizenServeTag());
 
       // 家族史
       personConverter.getFamilyHistories().forEach(family-> family.setEhrId(personConverter.getCitizenEhr().getId()));
-      citizenEhrFamilyHistoryDao.saveAll(personConverter.getFamilyHistories());
+      convertSaveList.getFamilyHistories().addAll(personConverter.getFamilyHistories());
 
       // 遗传史
       personConverter.getGeneticHistories().forEach(genetic->genetic.setEhrId(personConverter.getCitizenEhr().getId()));
-      citizenEhrGeneticHistoryDao.saveAll(personConverter.getGeneticHistories());
+      convertSaveList.getGeneticHistories().addAll(personConverter.getGeneticHistories());
 
       // 用药史
       personConverter.getMedicalHistories().forEach(medical->medical.setEhrId(personConverter.getCitizenEhr().getId()));
-      citizenEhrMedicalHistoryDao.saveAll(personConverter.getMedicalHistories());
+      convertSaveList.getMedicalHistories().addAll(personConverter.getMedicalHistories());
 
-   }
+  }
 
    private Long getCountyId(Long location){
         return countyDao.findByLocation(location)
