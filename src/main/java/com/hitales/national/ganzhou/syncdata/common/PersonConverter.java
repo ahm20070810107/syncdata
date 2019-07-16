@@ -306,7 +306,7 @@ public class PersonConverter {
         List<CitizenEhrMedicalHistory> medicalHistories= Lists.newArrayList();
 
         convertMedicalDiseaseHistory(person,medicalHistories);
-        convertMedicalHistory("ssHave","ssMc","ssTime",MedicalHistoryType.DISEASE,person,medicalHistories);
+        convertMedicalHistory("ssHave","ssMc","ssTime",MedicalHistoryType.OPERATION,person,medicalHistories);
         convertMedicalHistory("sxHave","sxYy","sxTime",MedicalHistoryType.BLOOD_TRANS,person,medicalHistories);
         convertMedicalHistory("wsHave","wsMc","wsTime",MedicalHistoryType.WOUND,person,medicalHistories);
 
@@ -409,8 +409,9 @@ public class PersonConverter {
         CitizenEhrFamilyHistory familyHistory=new CitizenEhrFamilyHistory();
         familyHistory.setType(relationship);
         familyHistory.setDisease( parseEnums(FamilyMedicalDisease.class,person,propertyPrefix,Lists.newArrayList("1","2","3","4","5","6")) );//我们这边没有无和其他
-
-        familyHistories.add(familyHistory);
+        if(!familyHistory.getDisease().isEmpty()){
+            familyHistories.add(familyHistory);
+        }
     }
 
     public Citizen getCitizen() {
