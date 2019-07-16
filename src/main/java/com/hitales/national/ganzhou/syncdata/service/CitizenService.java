@@ -91,6 +91,7 @@ public class CitizenService {
         Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, "居民错误信息", "编号,工作编号,姓名,身份证号,出生日期,现住址,联系电话,责任医生,建档机构,状态,备注", ",");
 
         int verifyRowCount = 1;
+        int dealCount = 1;
         Map<String, String> villageMap = new HashMap<>();
         Set<String> idCardSet = new HashSet<>();
         for (int i = 0;; i++) {
@@ -104,12 +105,13 @@ public class CitizenService {
                 Person sPerson = transPerson(person);
 
                 String errorInfo = getCitizenErrorInfo(CARD_TYPE,sPerson.getStatus(), sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getDistrictCode(), idCardSet, villageMap);
-
+                 log.info("正在处理第{}个人信息。。。",dealCount++ );
                 if(!Strings.isNullOrEmpty(errorInfo)){
                     Row verifyRow = verifySheet.createRow(verifyRowCount++);
                     PersonList personList = personListRepository.findByPersonid(sPerson.getPersonid()).orElse(new PersonList());
                     commonToolsService.fillSheetRow(verifyRow,sPerson.getPCardNo(),sPerson.getWCardNo(),sPerson.getName(),sPerson.getIdno(),sPerson.getBirthday(),
-                            sPerson.getNowAddress(), sPerson.getSPhone(),personList.getFzDoctor(), personList.getRecordOName(),"1".equals(sPerson.getStatus())?"正常":"死亡",errorInfo);
+                            sPerson.getNowAddress(), sPerson.getSPhone(),personList.getFzDoctor(), personList.getRecordOName(),
+                            "1".equals(sPerson.getStatus())?"正常":Strings.isNullOrEmpty(sPerson.getStatus())?"待完善":"死亡",errorInfo);
                     // 若有错则不做保存
                     continue;
                 }
