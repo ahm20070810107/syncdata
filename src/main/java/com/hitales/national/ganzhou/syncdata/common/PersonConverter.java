@@ -76,7 +76,7 @@ public class PersonConverter {
         if("1".equals(personTag.getMxb12())){
             tagList.add("职业病");
         }
-        if("1".equals(personTag.getMxb13())){
+        if("1".equals(personTag.getMxb13()) && Strings.isNotBlank(personTag.getMxbQtvalue())){
             tagList.add(personTag.getMxbQtvalue());
         }
         if("1".equals(personTag.getMxb14())){
@@ -166,8 +166,6 @@ public class PersonConverter {
             citizen.setPhone(person.getSPhone());
         }
 
-        // 状态
-        // TODO
         //死亡设置为永久失访
         if("2".equals(person.getStatus())){
             citizen.setFollowState(FollowState.MISS_FOREVER);
