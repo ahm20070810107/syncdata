@@ -306,7 +306,7 @@ public class PersonConverter {
         List<CitizenEhrMedicalHistory> medicalHistories= Lists.newArrayList();
 
         convertMedicalDiseaseHistory(person,medicalHistories);
-        convertMedicalHistory("ssHave","ssMc","ssTime",MedicalHistoryType.DISEASE,person,medicalHistories);
+        convertMedicalHistory("ssHave","ssMc","ssTime",MedicalHistoryType.OPERATION,person,medicalHistories);
         convertMedicalHistory("sxHave","sxYy","sxTime",MedicalHistoryType.BLOOD_TRANS,person,medicalHistories);
         convertMedicalHistory("wsHave","wsMc","wsTime",MedicalHistoryType.WOUND,person,medicalHistories);
 
