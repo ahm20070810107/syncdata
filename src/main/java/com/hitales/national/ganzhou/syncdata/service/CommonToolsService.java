@@ -56,7 +56,7 @@ public class CommonToolsService {
         }
     }
 
-    public String getGanzhouNation(String key){
+    public static String getGanzhouNation(String key){
         if(mapGanzhou.containsKey(key)){
             return mapGanzhou.get(key);
         }

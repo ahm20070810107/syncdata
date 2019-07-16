@@ -105,16 +105,15 @@ public class CitizenService {
             }
 
             for(Person person : personPage.getContent()){
-                Person sPerson = transPerson(person);
-
-                String errorInfo = getCitizenErrorInfo(CARD_TYPE,sPerson.getStatus(), sPerson.getIdno(),sPerson.getName(),sPerson.getNowAddress(), sPerson.getDistrictCode(), idCardSet, villageMap);
+//                Person sPerson = transPerson(person);
+                String errorInfo = getCitizenErrorInfo(CARD_TYPE,person.getStatus(), person.getIdno(),person.getName(),person.getNowAddress(), person.getDistrictCode(), idCardSet, villageMap);
                  log.info("正在处理第{}个人信息。。。",dealCount++ );
                 if(!Strings.isNullOrEmpty(errorInfo)){
                     Row verifyRow = verifySheet.createRow(verifyRowCount++);
-                    PersonList personList = personListRepository.findByPersonid(sPerson.getPersonid()).orElse(new PersonList());
-                    commonToolsService.fillSheetRow(verifyRow,sPerson.getPCardNo(),sPerson.getWCardNo(),sPerson.getName(),sPerson.getIdno(),sPerson.getBirthday(),
-                            sPerson.getNowAddress(), sPerson.getSPhone(),personList.getFzDoctor(), personList.getRecordOName(),
-                            "1".equals(sPerson.getStatus())?"正常":Strings.isNullOrEmpty(sPerson.getStatus())?"待完善":"死亡",errorInfo);
+                    PersonList personList = personListRepository.findByPersonid(person.getPersonid()).orElse(new PersonList());
+                    commonToolsService.fillSheetRow(verifyRow,person.getPCardNo(),person.getWCardNo(),person.getName(),person.getIdno(),person.getBirthday(),
+                            person.getNowAddress(), person.getSPhone(),personList.getFzDoctor(), personList.getRecordOName(),
+                            "1".equals(person.getStatus())?"正常":Strings.isNullOrEmpty(person.getStatus())?"待完善":"死亡",errorInfo);
                     // 若有错则不做保存
                     continue;
                 }

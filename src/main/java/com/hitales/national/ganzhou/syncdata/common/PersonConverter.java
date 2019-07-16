@@ -158,10 +158,10 @@ public class PersonConverter {
 
         citizen.setIdName(person.getName());
         citizen.setIdNo(person.getIdno());
-        citizen.setLocation(Long.parseLong(person.getDistrictCode()));
+        citizen.setLocation(Long.parseLong(person.getDistrictCode()+"001"));
         citizen.setAddress(person.getNowAddress());
         citizen.setIdType(IdType.ID);
-        citizen.setNation(CommonToolsService.getNation(person.getSNation()));
+        citizen.setNation(CommonToolsService.getNation(CommonToolsService.getGanzhouNation(person.getSNation())));
         if(Phone.match(person.getSPhone())) {
             citizen.setPhone(person.getSPhone());
         }
