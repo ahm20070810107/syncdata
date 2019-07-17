@@ -113,7 +113,7 @@ public class CitizenService {
         Set<String> idCardSet = new HashSet<>();
         for (int i = 0;; i++) {
             Pageable pageable = PageRequest.of(i,pageSize,sort);
-            Page<Person> personPage = null;
+            Page<Person> personPage ;
             if(townFlag){
                 personPage = personRepository.findByDistrictCodeIn(villageList,pageable);
             }else{
