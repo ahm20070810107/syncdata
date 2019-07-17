@@ -130,7 +130,7 @@ public class CitizenService {
                 {
                     System.out.println("sfs");
                 }
-                String errorInfo = getCitizenErrorInfo(CARD_TYPE,person.getStatus(), person.getIdno(),person.getName(),person.getNowAddress(), person.getDistrictCode(), idCardSet, villageMap);
+                String errorInfo = getCitizenErrorInfo(CARD_TYPE,person.getStatus(), person.getIdno(),person.getName(),person.getNowAddress(), person.getDistrictCode() + "001", idCardSet, villageMap);
 
                 log.info("正在处理第{}个人信息。。。",dealCount++ );
                 if(!Strings.isNullOrEmpty(errorInfo)){

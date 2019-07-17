@@ -1,10 +1,10 @@
 verify:
   output:
-    path: /data/hitales/midData/
+    path: /data/hitales/midData/  #居民等不符合入库规则数据输出路径
 hitales:
   national:
     ganzhou:
-      townFlag: false
+      townFlag: false    #false表示valueList的值为村列表，true表示valueList的值是镇列表
       valueList: 360722106204,360722106216     #村或镇列表以英文逗号隔开  360722107,360722106
       mysql:
 #        jdbc-url: jdbc:mysql://rm-bp10njuk48vd2n4bzpo.mysql.rds.aliyuncs.com:3306/national_service?&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull
