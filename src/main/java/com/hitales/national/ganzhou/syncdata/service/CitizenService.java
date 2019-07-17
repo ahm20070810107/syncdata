@@ -126,10 +126,6 @@ public class CitizenService {
 
             for(Person person : personPage.getContent()){
 //                Person sPerson = transPerson(person);
-                if(dealCount == 7113)
-                {
-                    System.out.println("sfs");
-                }
                 String errorInfo = getCitizenErrorInfo(CARD_TYPE,person.getStatus(), person.getIdno(),person.getName(),person.getNowAddress(), person.getDistrictCode() + "001", idCardSet, villageMap);
 
                 log.info("正在处理第{}个人信息。。。",dealCount++ );
