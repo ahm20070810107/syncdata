@@ -4,6 +4,8 @@ verify:
 hitales:
   national:
     ganzhou:
+      townFlag: false
+      valueList: 360722106204,360722106216     #村或镇列表以英文逗号隔开  360722107,360722106
       mysql:
 #        jdbc-url: jdbc:mysql://rm-bp10njuk48vd2n4bzpo.mysql.rds.aliyuncs.com:3306/national_service?&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull
         jdbc-url: jdbc:mysql://localhost:3306/national_service?&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull

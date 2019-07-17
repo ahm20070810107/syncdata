@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -74,6 +75,12 @@ public class CitizenService {
     @Autowired
     private CitizenEhrMedicalHistoryDao citizenEhrMedicalHistoryDao;
 
+    @Value("${hitales.national.ganzhou.townFlag}")
+    private Boolean townFlag;
+
+    @Value("${hitales.national.ganzhou.valueList}")
+    private String valueList;
+
 
     private final Sort sort = new Sort(Sort.Direction.ASC,"idno");
     private final int pageSize = 1000;
@@ -92,9 +99,9 @@ public class CitizenService {
         // 信丰县id
         Long countyId = getCountyId(360722000000000L);
         SXSSFWorkbook verifyWorkbook = new SXSSFWorkbook(CommonToolsService.MAX_READ_SIZE);
-
-        List<String> villageList = villageRepository.findByPIdIn(Lists.newArrayList("360722107","360722106"))
-                .stream().map(village->village.getId()).collect(Collectors.toList());
+        String[] villageTownList = valueList.split(",");
+        List<String> villageList = villageRepository.findByPIdIn(Lists.newArrayList(villageTownList))
+                .stream().map(Village::getId).collect(Collectors.toList());
 
         Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, "居民错误信息", "编号,工作编号,姓名,身份证号,出生日期,现住址,联系电话,责任医生,建档机构,状态,备注", ",");
 
@@ -106,8 +113,13 @@ public class CitizenService {
         Set<String> idCardSet = new HashSet<>();
         for (int i = 0;; i++) {
             Pageable pageable = PageRequest.of(i,pageSize,sort);
-//            Page<Person> personPage = personRepository.findByDistrictCodeIn(Lists.newArrayList("360722106204","360722106216"),pageable);
-            Page<Person> personPage = personRepository.findByDistrictCodeIn(villageList,pageable);
+            Page<Person> personPage = null;
+            if(townFlag){
+                personPage = personRepository.findByDistrictCodeIn(villageList,pageable);
+            }else{
+                personPage = personRepository.findByDistrictCodeIn(Lists.newArrayList(villageTownList),pageable);
+            }
+
             if(personPage.getContent().isEmpty()){
                 break;
             }
