@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @Author: jingang
@@ -144,7 +145,7 @@ public class PersonConverter {
 
         citizen.setBirthday( idCard.getBirthday().toDate() );;
         citizen.setBloodTypeAbo( parseEnum(BloodTypeABO.class,person.getBloodType()) );
-        citizen.setDisabilityState( parseEnums(DisabilityState.class,person,"cj",Lists.newArrayList("1","2","3","4","5")) );//key没对齐,差1
+        citizen.setDisabilityState( parseEnums(DisabilityState.class,person,"cj",Lists.newArrayList("1","2","3","4","5"),intVal->intVal-1) );//key没对齐,差1
         citizen.setEducationDegree( parseEnum(EducationDegree.class,person.getEducation()) );
         citizen.setContactName( person.getLinkMan() );
         citizen.setContactPhone( person.getLinkPhone() );
@@ -192,16 +193,30 @@ public class PersonConverter {
      *  枚举值转枚举对象
      * @param clazz 枚举类
      * @param value 值
-     * @param <T>
      * @return
      */
-    private <T> T parseEnum(Class clazz,String value){
+    private <T> T parseEnum(Class clazz, String value){
+        return parseEnum(clazz,value,null);
+    }
+
+    /**
+     *  枚举值转枚举对象
+     * @param clazz 枚举类
+     * @param value 值
+     * @param dealValFunc 处理值的方法
+     * @return
+     */
+    private <T> T parseEnum(Class clazz, String value, Function<Integer, Integer> dealValFunc){
         if(Strings.isBlank(value)){
             return null;
         }
 
         try {
-            return EnumCollector.forClass(clazz).keyOf(Integer.parseInt(value));
+            Integer intVal=Integer.parseInt(value);
+            if(dealValFunc != null){
+                intVal=dealValFunc.apply(intVal);
+            }
+            return EnumCollector.forClass(clazz).keyOf(intVal);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -215,17 +230,29 @@ public class PersonConverter {
      * @param person 居民
      * @param propertyPrefix 属性前缀
      * @param propertyPostfixs 属性后缀列表
-     * @param <T>
      * @return
      */
-    private <T> List<T> parseEnums(Class clazz,Person person,String propertyPrefix,List<String> propertyPostfixs){
+    private <T> List<T> parseEnums(Class clazz, Person person, String propertyPrefix, List<String> propertyPostfixs){
+        return parseEnums(clazz,person,propertyPrefix,propertyPostfixs,null);
+    }
+
+    /**
+     * 枚举值列表转枚举对象列表
+     * @param clazz 枚举类
+     * @param person 居民
+     * @param propertyPrefix 属性前缀
+     * @param propertyPostfixs 属性后缀列表
+     * @param dealValFunc 处理值的方法
+     * @return
+     */
+    private <T> List<T> parseEnums(Class clazz, Person person, String propertyPrefix, List<String> propertyPostfixs, Function<Integer,Integer> dealValFunc){
         List<T> list=Lists.newArrayList();
         try {
             BeanWrapper wrapper = new BeanWrapperImpl(person);
             for (String propertyPostfix : propertyPostfixs) {
                 Object value=wrapper.getPropertyValue(propertyPrefix+propertyPostfix);
                 String strVal=value==null?"":value.toString();
-                T item=parseEnum(clazz,strVal);
+                T item=parseEnum(clazz,strVal,dealValFunc);
                 if(Objects.nonNull(item)){
                     list.add(item);
                 }
@@ -247,8 +274,8 @@ public class PersonConverter {
      */
     private CitizenEhr convertEhr(Person person,PersonTag personTag){
         CitizenEhr ehr=new CitizenEhr();
-        ehr.setDrugAllergyHistory( parseEnums(DrugAllergyType.class,person,"gms",Lists.newArrayList("1","2","3")) );//key没对齐,差1
-        ehr.setExposureHistory( parseEnums(ExposureType.class,person,"sBls",Lists.newArrayList("0","1")) );//key没对齐,差1
+        ehr.setDrugAllergyHistory( parseEnums(DrugAllergyType.class,person,"gms",Lists.newArrayList("1","2","3"),intVal->intVal-1) );//key没对齐,差1
+        ehr.setExposureHistory( parseEnums(ExposureType.class,person,"sBls",Lists.newArrayList("0","1"),intVal->intVal-1) );//key没对齐,差1
         ehr.setHabitatDrinkingWater( parseEnum(HabitatDrinkingWater.class,person.getShYs()) );
         ehr.setHabitatFuelType( parseEnum(HabitatFuelType.class,person.getShRllx()) );
         ehr.setHabitatKitchenExhaustFacility( parseEnum(HabitatKitchenExhaustFacility.class,person.getShCfpfss()) );
