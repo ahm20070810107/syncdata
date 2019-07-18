@@ -84,14 +84,14 @@ public class CitizenService {
 
     private final Sort sort = new Sort(Sort.Direction.ASC,"idno");
     private final int pageSize = 1000;
-    private final int batchSaveSize = 2000;
+    private final int batchSaveSize = 1100;
 
     private final String CARD_TYPE = "身份证";
 
     private Person transPerson(Person person){
 
         person.setDistrictCode(person.getDistrictCode() +"001");
-        person.setSNation(commonToolsService.getGanzhouNation(person.getSNation()));
+        person.setSNation(CommonToolsService.getGanzhouNation(person.getSNation()));
         return person;
     }
 
