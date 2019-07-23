@@ -152,7 +152,9 @@ public class CitizenService {
         }
         batchSaveEntities(convertSaveList);
         commonToolsService.saveExcelFile(verifyWorkbook, "居民错误信息列表");
-        return String.format("居民信息转换完成,共%d条居民信息有问题未处理，详情请查看[verify.output.path]下excel",verifyRowCount - 1);
+        String outInfo = String.format("居民信息转换完成,共%d条居民信息有问题未处理，详情请查看[verify.output.path]下excel",verifyRowCount - 1);
+        log.info(outInfo);
+        return outInfo;
     }
 
   void batchSaveEntities(ConvertSaveEntityList convertSaveList){
