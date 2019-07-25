@@ -131,7 +131,7 @@ public class CitizenService {
                 log.info("正在处理第{}个人信息。。。",dealCount++ );
                 if(!Strings.isNullOrEmpty(errorInfo)){
                     Row verifyRow = verifySheet.createRow(verifyRowCount++);
-                    PersonList personList = personListRepository.findByPersonid(person.getPersonid()).orElse(new PersonList());
+                    PersonTag personList = personTagRepository.findByPersonid(person.getPersonid()).orElse(new PersonTag());
                     commonToolsService.fillSheetRow(verifyRow,person.getPCardNo(),person.getWCardNo(),person.getName(),person.getIdno(),person.getBirthday(),
                             person.getNowAddress(), person.getSPhone(),personList.getFzDoctor(), personList.getRecordOName(),
                             "1".equals(person.getStatus())?"正常":Strings.isNullOrEmpty(person.getStatus())?"待完善":"死亡",person.getDistrictCode(),person.getDistrictName(),errorInfo);
