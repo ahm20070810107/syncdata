@@ -103,7 +103,7 @@ public class CitizenService {
         List<String> villageList = villageRepository.findByPIdIn(Lists.newArrayList(villageTownList))
                 .stream().map(Village::getId).collect(Collectors.toList());
 
-        Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, "居民错误信息", "编号,工作编号,姓名,身份证号,出生日期,现住址,联系电话,责任医生,建档机构,状态,备注", ",");
+        Sheet verifySheet = commonToolsService.getNewSheet(verifyWorkbook, "居民错误信息", "编号,工作编号,姓名,身份证号,出生日期,现住址,联系电话,责任医生,建档机构,状态,所属村代码，所属村名称,备注", ",");
 
         int verifyRowCount = 1;
         int dealCount = 1;
@@ -134,7 +134,7 @@ public class CitizenService {
                     PersonList personList = personListRepository.findByPersonid(person.getPersonid()).orElse(new PersonList());
                     commonToolsService.fillSheetRow(verifyRow,person.getPCardNo(),person.getWCardNo(),person.getName(),person.getIdno(),person.getBirthday(),
                             person.getNowAddress(), person.getSPhone(),personList.getFzDoctor(), personList.getRecordOName(),
-                            "1".equals(person.getStatus())?"正常":Strings.isNullOrEmpty(person.getStatus())?"待完善":"死亡",errorInfo);
+                            "1".equals(person.getStatus())?"正常":Strings.isNullOrEmpty(person.getStatus())?"待完善":"死亡",person.getDistrictCode(),person.getDistrictName(),errorInfo);
                     // 若有错则不做保存
                     continue;
                 }
