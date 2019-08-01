@@ -364,9 +364,12 @@ public class PersonConverter {
                     } catch (ParseException e) {
                        continue;
                     }
-
+                    CitizenMedicalDisease medicalDisease = parseEnum(CitizenMedicalDisease.class,diseaseStr);
+                    if(Objects.isNull(medicalDisease)){
+                        continue;  //我们这边没有无和其他
+                    }
                     CitizenEhrMedicalHistory history=new CitizenEhrMedicalHistory();
-                    history.setDisease( parseEnum(CitizenMedicalDisease.class,diseaseStr) ); //我们这边没有无和其他
+                    history.setDisease( medicalDisease );
                     history.setConfirmDate(confirmDate);
                     history.setType(MedicalHistoryType.DISEASE);
 
