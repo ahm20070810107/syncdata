@@ -129,7 +129,7 @@ public class SaveCreepDataService {
 
     private boolean saveCitizenDetail(Pageable pageable,ThreadPoolExecutor threadPoolExecutor){
          List<PersonList> personLists = personListRepository.findBySyncState(0,pageable).getContent();
-         if(Objects.isNull(personLists) || personLists.isEmpty()){
+         if( personLists.isEmpty()){
              return false;
          }
          log.info("开始爬取居民详情数据{}条",personLists.size());
